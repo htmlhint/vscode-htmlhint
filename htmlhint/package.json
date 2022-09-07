@@ -4,7 +4,7 @@
   "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
   "icon": "HTMLHint.png",
   "version": "0.10.0",
-  "publisher": "mkaufman",
+  "publisher": "htmlhint",
   "galleryBanner": {
     "color": "#0000FF",
     "theme": "dark"
@@ -14,8 +14,7 @@
   },
   "license": "SEE LICENSE IN LICENSE.md",
   "bugs": {
-    "url": "https://github.com/htmlhint/vscode-htmlhint/issues",
-    "email": "mkaufman@microsoft.com"
+    "url": "https://github.com/htmlhint/vscode-htmlhint/issues"
   },
   "homepage": "https://github.com/htmlhint/vscode-htmlhint/blob/main/README.md",
   "repository": {
