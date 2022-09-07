@@ -1,10 +1,10 @@
 # vscode-htmlhint
 
-VSCode extension to support HTML-Hint, an HTML linter.
+VS Code extension to support HTMLHint, an HTML linter.
 
 ## Development setup
 
-- run npm install inside the `htmlhint` and `htmlhint-server` folders
+- run `npm install` inside the `htmlhint` and `htmlhint-server` folders
 - open VS Code on `htmlhint` and `htmlhint-server`
 
 ## Developing the server
