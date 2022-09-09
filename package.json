@@ -15,7 +15,7 @@
   "author": "htmlhint",
   "scripts": {
     "lint": "eslint -c .eslintrc.js --ext .ts .",
-    "prettier": "prettier --write '**/*.{ts,json,md,yml,js}'",
+    "prettier": "prettier --write \"**/*.{js,json,md,yml}\"",
     "test": "npm run lint"
   },
   "devDependencies": {

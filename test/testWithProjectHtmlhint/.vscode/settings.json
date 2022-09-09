@@ -2,8 +2,5 @@
   "files.associations": {
     "*.x": "html"
   },
-  "htmlhint.documentSelector": [
-    "html",
-    "x"
-  ]
+  "htmlhint.documentSelector": ["html", "x"]
 }

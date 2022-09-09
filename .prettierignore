@@ -1,0 +1,4 @@
+htmlhint/out/
+htmlhint/server/
+package-lock.json
+*.html
