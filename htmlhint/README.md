@@ -2,11 +2,11 @@
 
 Integrates the [HTMLHint](https://github.com/htmlhint/HTMLHint) static analysis tool into Visual Studio Code.
 
-![hero](images/hero.png)
+![hero](https://github.com/htmlhint/vscode-htmlhint/raw/main/htmlhint/images/hero.png)
 
 ## Configuration
 
-The HTMLHint extension will attempt to use the locally installed HTMLHint module (the project-specific module if present, or a globally installed HTMLHint module). If a locally installed HTMLHint isn't available, the extension will use the embedded version (current version 0.11.0).
+The HTMLHint extension will attempt to use the locally installed HTMLHint module (the project-specific module if present, or a globally installed HTMLHint module). If a locally installed HTMLHint isn't available, the extension will use the embedded version (current version 1.1.4).
 
 To install a version to the local project folder, run `npm install --save-dev htmlhint`. To install a global version on the current machine, run `npm install --global htmlhint`.
 
@@ -14,11 +14,11 @@ To install a version to the local project folder, run `npm install --save-dev ht
 
 The HTMLHint extension will run HTMLHint on your open HTML files and report the number of errors on the Status Bar with details in the Problems panel (**View** > **Problems**).
 
-![status bar](images/status-bar.png)
+![status bar](https://github.com/htmlhint/vscode-htmlhint/raw/main/htmlhint/images/status-bar.png)
 
 Errors in HTML files are highlighted with squiggles and you can hover over the squiggles to see the error message.
 
-![hover](images/hover.png)
+![hover](https://github.com/htmlhint/vscode-htmlhint/raw/main/htmlhint/images/hover.png)
 
 > **Note:** HTMLHint will only analyze open HTML files and does not search for HTML files in your project folder.
 
@@ -53,7 +53,7 @@ By default, HTMLHint will run on any files associated with the "html" language s
 
 ### Option 1: Treating your file like any other html file
 
-If you would like the file type to be treated as any other html file (including syntax highlighting, as well as HTMLHint linting), you'll need to associate the extension with the html language service. Add the following to your VS Code [settings](https://code.visualstudio.com/docs/customization/userandworkspace), replacing `"*.ext"` with your file extension.
+If you would like the file type to be treated as any other html file (including syntax highlighting, as well as HTMLHint linting), you'll need to associate the extension with the html language service. Add the following to your VS Code [settings](https://code.visualstudio.com/docs/getstarted/settings), replacing `"*.ext"` with your file extension.
 
 ```json
 {
@@ -65,7 +65,7 @@ If you would like the file type to be treated as any other html file (including 
 
 ### Option 2: Associating HTMLHint extension with your file type
 
-If your file type already has an associated language service other than "html", and you'd like HTMLHint to process those file types, you will need to associate the HTMLHint extension with that language service. Add the following to your VS Code [settings](https://code.visualstudio.com/docs/customization/userandworkspace), replacing `"mylang"` with your language service. For example, if you want HTMLHint to process `.twig` files, you would use `"twig"`. Note that with this configuration, **you need to open an html file first** to activate the HTMLHint extension. Otherwise, you won't see any linter errors, (the extension is hard-coded to activate when the html language service activates).
+If your file type already has an associated language service other than "html", and you'd like HTMLHint to process those file types, you will need to associate the HTMLHint extension with that language service. Add the following to your VS Code [settings](https://code.visualstudio.com/docs/getstarted/settings), replacing `"mylang"` with your language service. For example, if you want HTMLHint to process `.twig` files, you would use `"twig"`. Note that with this configuration, **you need to open an html file first** to activate the HTMLHint extension. Otherwise, you won't see any linter errors, (the extension is hard-coded to activate when the html language service activates).
 
 ```json
 {
@@ -75,7 +75,7 @@ If your file type already has an associated language service other than "html", 
 
 ## Settings
 
-The HTMLHint extension provides these [settings](https://code.visualstudio.com/docs/customization/userandworkspace):
+The HTMLHint extension provides these [settings](https://code.visualstudio.com/docs/getstarted/settings):
 
 - `htmlhint.enable` - disable the HTMLHint extension globally or per workspace.
 - `htmlhint.documentSelector` - specify additional language services to be linted
@@ -88,14 +88,14 @@ Here's an example using the `htmlhint.documentSelector` and `htmlhint.options` s
 
 ```json
 "htmlhint.documentSelector: [
-    "html",
-    "htm",
-    "twig"
+  "html",
+  "htm",
+  "twig"
 ],
 "htmlhint.options": {
-    "tagname-lowercase": false,
-    "attr-lowercase": true,
-    "attr-value-double-quotes":  true,
-    "doctype-first": true
+  "tagname-lowercase": false,
+  "attr-lowercase": true,
+  "attr-value-double-quotes":  true,
+  "doctype-first": true
 }
 ```

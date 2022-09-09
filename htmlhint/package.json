@@ -6,7 +6,7 @@
   "version": "0.10.0",
   "publisher": "htmlhint",
   "galleryBanner": {
-    "color": "#0000FF",
+    "color": "#333333",
     "theme": "dark"
   },
   "sponsor": {
@@ -35,12 +35,12 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "HTML-Hint configuration",
+      "title": "HTMLHint configuration",
       "properties": {
         "htmlhint.enable": {
           "type": "boolean",
           "default": true,
-          "description": "Control whether htmlhint is enabled for HTML files or not."
+          "description": "Control whether HTMLHint is enabled for HTML files or not."
         },
         "htmlhint.documentSelector": {
           "type": "array",
@@ -53,7 +53,7 @@
         "htmlhint.options": {
           "type": "object",
           "default": {},
-          "description": "The htmlhint options object to provide args to the htmlhint command."
+          "description": "The HTMLHint options object to provide args to the HTMLHint command."
         }
       }
     }
