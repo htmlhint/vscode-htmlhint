@@ -9,12 +9,12 @@
   "dependencies": {
     "fs": "0.0.2",
     "htmlhint": "^1.1.4",
-    "strip-json-comments": "^2.0.0",
-    "vscode-languageserver": "^8.0.2"
+    "strip-json-comments": "^3.1.1",
+    "vscode-languageserver": "^3.5.1"
   },
   "devDependencies": {
     "@types/node": "^6.0.41",
-    "typescript": "^2.5.2"
+    "typescript": "^2.9.2"
   },
   "scripts": {
     "compile": "installServerIntoExtension ../htmlhint ./package.json ./src/tsconfig.json && node node_modules/typescript/bin/tsc -p ./src",

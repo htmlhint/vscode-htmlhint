@@ -1,15 +1,11 @@
 {
-	"compilerOptions": {
-		"target": "es6",
-		"module": "commonjs",
-		"moduleResolution": "node",
-		"sourceMap": true,
-		"outDir": "../../htmlhint/server",
-		"lib": [
-			"es6"
-		]
-	},
-	"exclude": [
-		"node_modules"
-	]
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "../../htmlhint/server",
+    "lib": ["es6"]
+  },
+  "exclude": ["node_modules"]
 }

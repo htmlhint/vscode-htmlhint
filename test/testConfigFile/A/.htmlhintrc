@@ -1,6 +1,7 @@
 {
-    "tagname-lowercase": true,
-    "attr-lowercase": true,
-    "attr-value-double-quotes":  true,
-    "doctype-first": true
-} 
+  "tagname-lowercase": true,
+  "attr-lowercase": true,
+  "attr-value-double-quotes": true,
+  "doctype-first": true,
+  "html-lang-require": true
+}
