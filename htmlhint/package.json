@@ -1,5 +1,5 @@
 {
-  "name": "HTMLHint",
+  "name": "htmlhint",
   "displayName": "HTMLHint",
   "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
   "icon": "images/icon.png",
@@ -67,7 +67,7 @@
   "devDependencies": {
     "typescript": "^2.9.2",
     "vscode": "^1.1.37",
-    "@types/node": "^6.0.41"
+    "@types/node": "^6.0.118"
   },
   "dependencies": {
     "vscode-languageclient": "^3.5.1"

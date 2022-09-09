@@ -158,7 +158,7 @@ function getErrorMessage(err: any, document: server.TextDocument): string {
   if (typeof err.message === 'string' || err.message instanceof String) {
     result = <string>err.message;
   } else {
-    result = `An unknown error occured while validating file: ${server.Files.uriToFilePath(document.uri)}`;
+    result = `An unknown error occurred while validating file: ${server.Files.uriToFilePath(document.uri)}`;
   }
   return result;
 }
