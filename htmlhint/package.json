@@ -1,10 +1,10 @@
 {
-  "name": "htmlhint",
+  "name": "vscode-htmlhint",
   "displayName": "HTMLHint",
   "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
   "icon": "images/icon.png",
-  "version": "0.10.0",
-  "publisher": "htmlhint",
+  "version": "1.0.0",
+  "publisher": "HTMLHint",
   "galleryBanner": {
     "color": "#333333",
     "theme": "dark"

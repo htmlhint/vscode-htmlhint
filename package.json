@@ -12,16 +12,16 @@
     "url": "git+https://github.com/htmlhint/vscode-htmlhint.git"
   },
   "license": "MIT",
-  "author": "htmlhint",
+  "author": "HTMLHint",
   "scripts": {
     "lint": "eslint -c .eslintrc.js --ext .ts .",
     "prettier": "prettier --write \"**/*.{js,json,md,yml}\"",
     "test": "npm run lint"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.35.1",
-    "@typescript-eslint/parser": "^5.35.1",
-    "eslint": "^8.23.0",
+    "@typescript-eslint/eslint-plugin": "^5.37.0",
+    "@typescript-eslint/parser": "^5.37.0",
+    "eslint": "^8.23.1",
     "eslint-config-prettier": "^8.5.0",
     "prettier": "^2.7.1"
   }

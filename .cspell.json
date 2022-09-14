@@ -1,0 +1,8 @@
+{
+  "version": "0.2",
+  "words": ["htmlhint", "htmlhintrc", "mylang", "ruleset", "tagname"],
+  "language": "en-US",
+  "files": ["**/*.md"],
+  "ignorePaths": [".cspell.json"],
+  "useGitignore": true
+}
