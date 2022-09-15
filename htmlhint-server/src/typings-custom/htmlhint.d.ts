@@ -1,4 +1,3 @@
-
 declare module 'htmlhint' {
 
   // version >= 0.11.0 es6
@@ -26,5 +25,4 @@ declare module 'htmlhint' {
     description: string,
     link: string
   }
-
 }
