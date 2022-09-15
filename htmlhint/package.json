@@ -70,6 +70,6 @@
     "@types/node": "^6.0.118"
   },
   "dependencies": {
-    "vscode-languageclient": "^3.5.1"
+    "vscode-languageclient": "^7.0.0"
   }
 }
