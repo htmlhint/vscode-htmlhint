@@ -3,7 +3,7 @@
   "command": "npm",
   "type": "shell",
   "presentation": {
-    "reveal": "silent",
+    "reveal": "silent"
   },
   "args": ["run", "watch"],
   "isBackground": true,

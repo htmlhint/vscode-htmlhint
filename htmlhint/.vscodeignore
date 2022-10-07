@@ -27,5 +27,8 @@ images/status-bar.png
 **/node_modules/**/license
 **/node_modules/**/license
 **/node_modules/**/LICENSE
+**/node_modules/**/package-lock.json
+**/node_modules/**/settings.json
+**/node_modules/**/*.test.js
 tsconfig.json
 typings/**

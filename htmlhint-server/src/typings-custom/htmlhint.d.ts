@@ -1,5 +1,4 @@
-declare module 'htmlhint' {
-
+declare module "htmlhint" {
   // version >= 0.11.0 es6
   export default HTMLHint;
 
@@ -11,18 +10,18 @@ declare module 'htmlhint' {
   }
 
   export interface Error {
-    type: string,
-    message: string,
-    raw: string,
-    evidence: string,
-    line: number,
-    col: number,
-    rule: Rule
+    type: string;
+    message: string;
+    raw: string;
+    evidence: string;
+    line: number;
+    col: number;
+    rule: Rule;
   }
 
   export interface Rule {
-    id: string,
-    description: string,
-    link: string
+    id: string;
+    description: string;
+    link: string;
   }
 }

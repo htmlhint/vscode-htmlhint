@@ -1,20 +1,20 @@
-'use strict';
+"use strict";
 
 /// <reference path="typings/node/node.d.ts" />
 /// <reference path="typings/htmlhint/htmlhint.d.ts" />
 
-import * as path from 'path';
-import * as server from 'vscode-languageserver';
-import * as htmlhint from 'htmlhint';
-import fs = require('fs');
-let stripJsonComments: any = require('strip-json-comments');
+import * as path from "path";
+import * as server from "vscode-languageserver";
+import * as htmlhint from "htmlhint";
+import fs = require("fs");
+let stripJsonComments: any = require("strip-json-comments");
 
 interface Settings {
   htmlhint: {
     configFile: string;
     enable: boolean;
     options: any;
-  }
+  };
   [key: string]: any;
 }
 
@@ -32,13 +32,17 @@ let htmlhintrcOptions: any = {};
  * Given an htmlhint Error object, approximate the text range highlight
  */
 function getRange(error: htmlhint.Error, lines: string[]): any {
-
   let line = lines[error.line - 1];
-  var isWhitespace = false;
-  var curr = error.col;
+  let isWhitespace = false;
+  let curr = error.col;
   while (curr < line.length && !isWhitespace) {
-    var char = line[curr];
-    isWhitespace = (char === ' ' || char === '\t' || char === '\n' || char === '\r' || char === '<');
+    let char = line[curr];
+    isWhitespace =
+      char === " " ||
+      char === "\t" ||
+      char === "\n" ||
+      char === "\r" ||
+      char === "<";
     ++curr;
   }
 
@@ -49,25 +53,27 @@ function getRange(error: htmlhint.Error, lines: string[]): any {
   return {
     start: {
       line: error.line - 1, // Html-hint line numbers are 1-based.
-      character: error.col - 1
+      character: error.col - 1,
     },
     end: {
       line: error.line - 1,
-      character: curr
-    }
+      character: curr,
+    },
   };
 }
 
 /**
  * Given an htmlhint.Error type return a VS Code server Diagnostic object
  */
-function makeDiagnostic(problem: htmlhint.Error, lines: string[]): server.Diagnostic {
-
+function makeDiagnostic(
+  problem: htmlhint.Error,
+  lines: string[]
+): server.Diagnostic {
   return {
     severity: server.DiagnosticSeverity.Warning,
     message: problem.message,
     range: getRange(problem, lines),
-    code: problem.rule.id
+    code: problem.rule.id,
   };
 }
 
@@ -76,19 +82,32 @@ function makeDiagnostic(problem: htmlhint.Error, lines: string[]): server.Diagno
  * VS Code settings, or to use a .htmlhintrc file.
  */
 function getConfiguration(filePath: string): any {
-  var options: any;
+  let options: any;
   if (settings.htmlhint) {
-    if (settings.htmlhint.configFile && settings.htmlhint.options && Object.keys(settings.htmlhint.options).length > 0) {
-      throw new Error(`The configuration settings for HTMLHint are invalid. Please specify either 'htmlhint.configFile' or 'htmlhint.options', but not both.`);
+    if (
+      settings.htmlhint.configFile &&
+      settings.htmlhint.options &&
+      Object.keys(settings.htmlhint.options).length > 0
+    ) {
+      throw new Error(
+        `The configuration settings for HTMLHint are invalid. Please specify either 'htmlhint.configFile' or 'htmlhint.options', but not both.`
+      );
     }
     if (settings.htmlhint.configFile) {
       if (fs.existsSync(settings.htmlhint.configFile)) {
-        options = loadConfigurationFile(settings.htmlhint.configFile)
+        options = loadConfigurationFile(settings.htmlhint.configFile);
       } else {
-        const configFileHint = !path.isAbsolute(settings.htmlhint.configFile) ? ` (resolves to '${path.resolve(settings.htmlhint.configFile)}')` : '';
-        throw new Error(`The configuration settings for HTMLHint are invalid. The file '${settings.htmlhint.configFile}'${configFileHint} specified in 'htmlhint.configFile' could not be found.`);
+        const configFileHint = !path.isAbsolute(settings.htmlhint.configFile)
+          ? ` (resolves to '${path.resolve(settings.htmlhint.configFile)}')`
+          : "";
+        throw new Error(
+          `The configuration settings for HTMLHint are invalid. The file '${settings.htmlhint.configFile}'${configFileHint} specified in 'htmlhint.configFile' could not be found.`
+        );
       }
-    } else if (settings.htmlhint.options && Object.keys(settings.htmlhint.options).length > 0) {
+    } else if (
+      settings.htmlhint.options &&
+      Object.keys(settings.htmlhint.options).length > 0
+    ) {
       options = settings.htmlhint.options;
     } else {
       options = findConfigForHtmlFile(filePath);
@@ -106,17 +125,16 @@ function getConfiguration(filePath: string): any {
  * to find a .htmlhintrc file to use as the linter configuration.  The settings are
  */
 function findConfigForHtmlFile(base: string) {
-  var options: any;
+  let options: any;
 
   if (fs.existsSync(base)) {
-
     // find default config file in parent directory
     if (fs.statSync(base).isDirectory() === false) {
       base = path.dirname(base);
     }
 
     while (base && !options) {
-      var tmpConfigFile = path.resolve(base + path.sep, '.htmlhintrc');
+      let tmpConfigFile = path.resolve(base + path.sep, ".htmlhintrc");
 
       // undefined means we haven't tried to load the config file at this path, so try to load it.
       if (htmlhintrcOptions[tmpConfigFile] === undefined) {
@@ -139,30 +157,34 @@ function findConfigForHtmlFile(base: string) {
  * Given a path to a .htmlhintrc file, load it into a javascript object and return it.
  */
 function loadConfigurationFile(configFile): any {
-  var ruleset: any = null;
+  let ruleset: any = null;
   if (fs.existsSync(configFile)) {
-    var config = fs.readFileSync(configFile, 'utf8');
+    let config = fs.readFileSync(configFile, "utf8");
     try {
       ruleset = JSON.parse(stripJsonComments(config));
-    }
-    catch (e) { }
+    } catch (e) {}
   }
   return ruleset;
 }
 
 function getErrorMessage(err: any, document: server.TextDocument): string {
   let result: string = null;
-  if (typeof err.message === 'string' || err.message instanceof String) {
+  if (typeof err.message === "string" || err.message instanceof String) {
     result = <string>err.message;
   } else {
-    result = `An unknown error occurred while validating file: ${server.Files.uriToFilePath(document.uri)}`;
+    result = `An unknown error occurred while validating file: ${server.Files.uriToFilePath(
+      document.uri
+    )}`;
   }
   return result;
 }
 
-function validateAllTextDocuments(connection: server.IConnection, documents: server.TextDocument[]): void {
+function validateAllTextDocuments(
+  connection: server.IConnection,
+  documents: server.TextDocument[]
+): void {
   let tracker = new server.ErrorMessageTracker();
-  documents.forEach(document => {
+  documents.forEach((document) => {
     try {
       validateTextDocument(connection, document);
     } catch (err) {
@@ -172,7 +194,10 @@ function validateAllTextDocuments(connection: server.IConnection, documents: ser
   tracker.sendErrors(connection);
 }
 
-function validateTextDocument(connection: server.IConnection, document: server.TextDocument): void {
+function validateTextDocument(
+  connection: server.IConnection,
+  document: server.TextDocument
+): void {
   try {
     doValidate(connection, document);
   } catch (err) {
@@ -188,37 +213,61 @@ function trace(message: string, verbose?: string): void {
   connection.tracer.log(message, verbose);
 }
 
-connection.onInitialize((params: server.InitializeParams, token: server.CancellationToken) => {
-  let rootFolder = params.rootPath;
-  let initOptions: {
-    nodePath: string;
-  } = params.initializationOptions;
-  let nodePath = initOptions ? (initOptions.nodePath ? initOptions.nodePath : undefined) : undefined;
+connection.onInitialize(
+  (params: server.InitializeParams, token: server.CancellationToken) => {
+    let rootFolder = params.rootPath;
+    let initOptions: {
+      nodePath: string;
+    } = params.initializationOptions;
+    let nodePath = initOptions
+      ? initOptions.nodePath
+        ? initOptions.nodePath
+        : undefined
+      : undefined;
 
-  const result = server.Files.resolveModule2(rootFolder, 'htmlhint', nodePath, trace).
-    then((value): server.InitializeResult | server.ResponseError<server.InitializeError> => {
-      linter = value.default || value.HTMLHint || value;
-      //connection.window.showInformationMessage(`onInitialize() - found local htmlhint (version ! ${value.HTMLHint.version})`);
+    const result = server.Files.resolveModule2(
+      rootFolder,
+      "htmlhint",
+      nodePath,
+      trace
+    ).then(
+      (
+        value
+      ):
+        | server.InitializeResult
+        | server.ResponseError<server.InitializeError> => {
+        linter = value.default || value.HTMLHint || value;
+        //connection.window.showInformationMessage(`onInitialize() - found local htmlhint (version ! ${value.HTMLHint.version})`);
 
-      let result: server.InitializeResult = { capabilities: { textDocumentSync: documents.syncKind } };
-      return result;
-    }, (error) => {
-      // didn't find htmlhint in project or global, so use embedded version.
-      linter = htmlhint.default || htmlhint.HTMLHint || htmlhint;
-      //connection.window.showInformationMessage(`onInitialize() using embedded htmlhint(version ! ${linter.version})`);
-      let result: server.InitializeResult = { capabilities: { textDocumentSync: documents.syncKind } };
-      return result;
-    });
+        let result: server.InitializeResult = {
+          capabilities: { textDocumentSync: documents.syncKind },
+        };
+        return result;
+      },
+      (error) => {
+        // didn't find htmlhint in project or global, so use embedded version.
+        linter = htmlhint.default || htmlhint.HTMLHint || htmlhint;
+        //connection.window.showInformationMessage(`onInitialize() using embedded htmlhint(version ! ${linter.version})`);
+        let result: server.InitializeResult = {
+          capabilities: { textDocumentSync: documents.syncKind },
+        };
+        return result;
+      }
+    );
 
-  return result as Thenable<server.InitializeResult>;
-});
+    return result as Thenable<server.InitializeResult>;
+  }
+);
 
-function doValidate(connection: server.IConnection, document: server.TextDocument): void {
+function doValidate(
+  connection: server.IConnection,
+  document: server.TextDocument
+): void {
   try {
     let uri = document.uri;
     let fsPath = server.Files.uriToFilePath(uri);
     let contents = document.getText();
-    let lines = contents.split('\n');
+    let lines = contents.split("\n");
 
     let config = getConfiguration(fsPath);
 
@@ -226,14 +275,14 @@ function doValidate(connection: server.IConnection, document: server.TextDocumen
 
     let diagnostics: server.Diagnostic[] = [];
     if (errors.length > 0) {
-      errors.forEach(each => {
+      errors.forEach((each) => {
         diagnostics.push(makeDiagnostic(each, lines));
       });
     }
     connection.sendDiagnostics({ uri, diagnostics });
   } catch (err) {
     let message: string = null;
-    if (typeof err.message === 'string' || err.message instanceof String) {
+    if (typeof err.message === "string" || err.message instanceof String) {
       message = <string>err.message;
       throw new Error(message);
     }
@@ -251,14 +300,14 @@ documents.onDidChangeContent((event) => {
 connection.onDidChangeConfiguration((params) => {
   settings = params.settings;
 
-
   validateAllTextDocuments(connection, documents.all());
 });
 
 // The watched .htmlhintrc has changed. Clear out the last loaded config, and revalidate all documents.
 connection.onDidChangeWatchedFiles((params) => {
-  for (var i = 0; i < params.changes.length; i++) {
-    htmlhintrcOptions[server.Files.uriToFilePath(params.changes[i].uri)] = undefined;
+  for (let i = 0; i < params.changes.length; i++) {
+    htmlhintrcOptions[server.Files.uriToFilePath(params.changes[i].uri)] =
+      undefined;
   }
   validateAllTextDocuments(connection, documents.all());
 });

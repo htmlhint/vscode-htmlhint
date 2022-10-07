@@ -1,4 +1,4 @@
-# vscode-htmlhint
+# HTMLHint - VS Code Extension
 
 Integrates the [HTMLHint](https://github.com/htmlhint/HTMLHint) static analysis tool into Visual Studio Code.
 

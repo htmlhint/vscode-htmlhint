@@ -1,8 +1,12 @@
-# Change Log
+# Changelog
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
 <!-- Check [Keep a Changelog](https://keepachangelog.com/) for recommendations on how to structure this file. -->
+
+### v1.0.4 (2022-10-07)
+
+- Reduced file-size and minor optimizations
 
 ### v1.0.3 (2022-09-21)
 
