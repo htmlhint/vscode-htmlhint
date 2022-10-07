@@ -7,6 +7,8 @@ VS Code extension to support HTMLHint, an HTML linter.
     <img alt="VS Code Marketplace Downloads" src="https://img.shields.io/visual-studio-marketplace/d/HTMLHint.vscode-htmlhint"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=HTMLHint.vscode-htmlhint">
     <img alt="VS Code Marketplace Installs" src="https://img.shields.io/visual-studio-marketplace/i/HTMLHint.vscode-htmlhint"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=HTMLHint.vscode-htmlhint">
+    <img alt="VS Code Marketplace Ratings" src="https://img.shields.io/visual-studio-marketplace/r/HTMLHint.vscode-htmlhint"></a>
   <a href="https://twitter.com/htmlhint">
     <img alt="Follow HTMLHint on Twitter" src="https://img.shields.io/twitter/follow/htmlhint.svg?label=follow+htmlhint&style=flat-square"></a>
 </p>

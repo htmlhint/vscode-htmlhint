@@ -1,1 +1,1 @@
-interface Thenable<T> extends PromiseLike<T> { }
+interface Thenable<T> extends PromiseLike<T> {}
