@@ -13,7 +13,7 @@
     "vscode-languageserver": "3.5.1"
   },
   "devDependencies": {
-    "@types/node": "6.14.4",
+    "@types/node": "18.8.3",
     "typescript": "2.9.2"
   },
   "engines": {
