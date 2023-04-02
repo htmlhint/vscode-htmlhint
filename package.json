@@ -23,7 +23,7 @@
     "@typescript-eslint/parser": "^5.48.1",
     "eslint": "^8.35.0",
     "eslint-config-prettier": "^8.8.0",
-    "prettier": "^2.8.4"
+    "prettier": "^2.8.7"
   },
   "engines": {
     "node": ">= 16"
