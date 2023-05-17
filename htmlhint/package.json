@@ -3,7 +3,7 @@
   "displayName": "HTMLHint",
   "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
   "icon": "images/icon.png",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "publisher": "HTMLHint",
   "galleryBanner": {
     "color": "#333333",
@@ -29,13 +29,13 @@
     "vscode": "^1.16.0"
   },
   "activationEvents": [
-    "onLanguage:html"
+    "onFileSystem:file"
   ],
   "main": "./out/extension",
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "HTMLHint configuration",
+      "title": "HTMLHint",
       "properties": {
         "htmlhint.enable": {
           "type": "boolean",
@@ -66,7 +66,7 @@
   },
   "devDependencies": {
     "typescript": "2.9.2",
-    "vscode": "^1.1.37",
+    "vscode": "1.1.37",
     "@types/node": "6.0.118"
   },
   "dependencies": {
