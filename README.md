@@ -13,6 +13,19 @@ VS Code extension to support HTMLHint, an HTML linter.
     <img alt="VS Code Marketplace Ratings" src="https://img.shields.io/visual-studio-marketplace/r/HTMLHint.vscode-htmlhint"></a>
 </p>
 
+## Installation
+
+Install through VS Code extensions. Search for `HTMLHint` and install the extension.
+
+- [Visual Studio Code Marketplace: HTMLHint](https://marketplace.visualstudio.com/items?itemName=HTMLHint.vscode-htmlhint)
+- [Open VSX Registry: HTMLHint](https://open-vsx.org/extension/HTMLHint/vscode-htmlhint)
+
+Alternatively, launch VS Code Quick Open (`Ctrl`+`P`), paste the following command, and press enter.
+
+```
+ext install HTMLHint.vscode-htmlhint
+```
+
 ## Development setup
 
 - run `npm install` inside the `htmlhint` and `htmlhint-server` folders
