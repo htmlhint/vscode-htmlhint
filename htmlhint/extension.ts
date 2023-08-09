@@ -48,9 +48,9 @@ export function activate(context: ExtensionContext) {
     "HTML-hint",
     serverOptions,
     clientOptions,
-    forceDebug
+    forceDebug,
   );
   context.subscriptions.push(
-    new SettingMonitor(client, "htmlhint.enable").start()
+    new SettingMonitor(client, "htmlhint.enable").start(),
   );
 }
