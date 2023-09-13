@@ -1,6 +1,14 @@
 {
   "version": "0.2",
-  "words": ["htmlhint", "htmlhintrc", "mylang", "ruleset", "tagname", "VSIX"],
+  "words": [
+    "fnames",
+    "htmlhint",
+    "htmlhintrc",
+    "mylang",
+    "ruleset",
+    "tagname",
+    "VSIX"
+  ],
   "language": "en-US",
   "ignorePaths": [".cspell.json"],
   "useGitignore": true
