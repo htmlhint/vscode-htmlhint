@@ -16,7 +16,7 @@
   "author": "HTMLHint",
   "scripts": {
     "lint": "eslint -c .eslintrc.js --ext .ts .",
-    "prettier": "prettier --write \"**/*.{js,json,md,ts,yml}\"",
+    "prettier": "prettier --write \"**/*.{js,md,ts,yml}\"",
     "test": "npm run prettier && npm run lint && cd htmlhint && npm i && cd ../htmlhint-server && npm i && npm run compile"
   },
   "devDependencies": {
@@ -24,9 +24,9 @@
     "@typescript-eslint/parser": "6.7.0",
     "eslint": "8.55.0",
     "eslint-config-prettier": "9.1.0",
-    "prettier": "3.0.3"
+    "prettier": "3.2.4"
   },
   "engines": {
-    "node": ">= 16"
+    "node": ">= 18"
   }
 }
