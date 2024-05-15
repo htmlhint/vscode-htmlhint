@@ -87,7 +87,7 @@ You can change settings globally (**File** > **Preferences** > **User Settings**
 Here's an example using the `htmlhint.documentSelector` and `htmlhint.options` settings:
 
 ```json
-"htmlhint.documentSelector: [
+"htmlhint.documentSelector": [
   "html",
   "htm",
   "twig"
