@@ -1,18 +1,5 @@
 version: 2
 updates:
-  - package-ecosystem: npm
-    directory: "/"
-    schedule:
-      interval: monthly
-    versioning-strategy: increase
-  - package-ecosystem: npm
-    directory: "/htmlhint/"
-    schedule:
-      interval: monthly
-  - package-ecosystem: npm
-    directory: "/htmlhint-server/"
-    schedule:
-      interval: monthly
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
