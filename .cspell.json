@@ -2,6 +2,7 @@
   "version": "0.2",
   "words": [
     "autobuild",
+    "codeql",
     "fnames",
     "htmlhint",
     "htmlhintrc",
@@ -11,6 +12,8 @@
     "VSIX"
   ],
   "language": "en,en-US",
-  "ignorePaths": [".cspell.json"],
+  "ignorePaths": [
+    ".cspell.json"
+  ],
   "useGitignore": true
 }
