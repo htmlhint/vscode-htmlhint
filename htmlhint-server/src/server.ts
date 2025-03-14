@@ -296,6 +296,12 @@ documents.onDidChangeContent((event) => {
   validateTextDocument(connection, event.document);
 });
 
+// Send an empty array of diagnostics to stop displaying them on a closed file
+connection.onDidCloseTextDocument((event) => {
+  const uri = event.textDocument.uri;
+  connection.sendDiagnostics({ uri, diagnostics: [] });
+});
+
 // The VS Code htmlhint settings have changed. Revalidate all documents.
 connection.onDidChangeConfiguration((params) => {
   settings = params.settings;
