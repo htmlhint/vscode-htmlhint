@@ -6,3 +6,9 @@ updates:
       interval: weekly
     labels:
       - github-actions
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: monthly
+    versioning-strategy: increase
+    open-pull-requests-limit: 1
