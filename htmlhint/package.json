@@ -3,7 +3,7 @@
   "displayName": "HTMLHint",
   "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
   "icon": "images/icon.png",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "publisher": "HTMLHint",
   "galleryBanner": {
     "color": "#333333",
@@ -71,5 +71,8 @@
   },
   "dependencies": {
     "vscode-languageclient": "3.5.1"
+  },
+  "volta": {
+    "node": "18.20.7"
   }
 }
