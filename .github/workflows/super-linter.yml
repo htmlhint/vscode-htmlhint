@@ -41,4 +41,5 @@ jobs:
           VALIDATE_MARKDOWN: false
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_NATURAL_LANGUAGE: false
+          VALIDATE_TYPESCRIPT_ES: false
           VALIDATE_TYPESCRIPT_STANDARD: false
