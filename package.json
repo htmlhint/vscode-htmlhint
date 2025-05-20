@@ -17,13 +17,14 @@
   "scripts": {
     "lint": "eslint -c .eslintrc.js --ext .ts .",
     "prettier": "prettier --write \"**/*.{js,md,ts,yml}\"",
+    "spellcheck": "npx cspell \"**/*.{html,js,json,md,ts,yml}\"",
     "test": "npm run prettier && npm run lint && cd htmlhint && npm i && cd ../htmlhint-server && npm i && npm run compile"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "6.7.0",
     "@typescript-eslint/parser": "6.7.0",
     "eslint": "8.57.1",
-    "eslint-config-prettier": "10.1.2",
+    "eslint-config-prettier": "10.1.5",
     "prettier": "3.5.3"
   },
   "engines": {

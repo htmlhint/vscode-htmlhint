@@ -7,10 +7,15 @@
     "htmlhint",
     "htmlhintrc",
     "mylang",
+    "nvmrc",
     "ruleset",
     "tagname",
     "VSIX"
   ],
+  "flagWords": [
+    "hte"
+  ],
+  "allowCompoundWords": true,
   "language": "en,en-US",
   "ignorePaths": [
     ".cspell.json"
