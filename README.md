@@ -1,4 +1,4 @@
-# HTMLHint - VS Code Extension
+# HTMLHint - Visual Studio Code Extension
 
 VS Code extension to support HTMLHint, an HTML linter.
 
@@ -22,7 +22,7 @@ Install through VS Code extensions. Search for `HTMLHint` and install the extens
 
 Alternatively, launch VS Code Quick Open (`Ctrl`+`P`), paste the following command, and press enter.
 
-```
+```txt
 ext install HTMLHint.vscode-htmlhint
 ```
 
