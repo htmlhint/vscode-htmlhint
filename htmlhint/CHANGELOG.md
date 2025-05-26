@@ -2,6 +2,18 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.0.8 (2025-05-27)
+
+Update HTMLHint to v1.2.0
+
+### v1.0.7 (2025-03-19)
+
+Fix build issue
+
+### v1.0.6 (2025-03-19)
+
+Fix for issues appearing even when files are closed
+
 ### v1.0.5 (2023-05-17)
 
 - Fix for activationEvents (now can be used in `markdown` and other files)
