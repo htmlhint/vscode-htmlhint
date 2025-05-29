@@ -22,7 +22,6 @@
 **/.prettierrc
 **/*.bnf
 **/*.css
-**/*.map
 **/*.travis.yml
 **/*.ts
 **/*.txt
@@ -48,3 +47,17 @@ images/status-bar.png
 **/node_modules/**/*.test.js
 tsconfig.json
 typings/**
+
+# Exclude source and config files from the VSIX package
+src/
+out/
+scripts/
+*.ts
+*.map
+
+# Include only the bundled extension and necessary assets
+dist/
+images/
+README.md
+LICENSE.md
+package.json
