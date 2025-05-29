@@ -20,6 +20,9 @@
     "spellcheck": "npx cspell \"**/*.{html,js,json,md,ts,yml}\"",
     "test": "npm run prettier && npm run lint && cd htmlhint && npm i && cd ../htmlhint-server && npm i && npm run compile"
   },
+  "dependencies": {
+    "vscode-languageclient": "^3.5.1"
+  },
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",
@@ -41,8 +44,5 @@
   },
   "volta": {
     "node": "18.20.7"
-  },
-  "dependencies": {
-    "vscode-languageclient": "^3.5.1"
   }
 }
