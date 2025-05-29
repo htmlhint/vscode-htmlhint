@@ -29,6 +29,14 @@ ext install HTMLHint.vscode-htmlhint
 ## Development setup
 
 - run `npm install` inside the `htmlhint` and `htmlhint-server` folders
+- run `npm run compile` inside the `htmlhint` and `htmlhint-server` folders
+- open VS Code on this folder
+- Press Ctrl+Shift+B to compile the client and server
+- Switch to the Debug viewlet
+- Select `Launch Client` from the drop down
+- Run the launch config
+
+See [MIGRATION.md](./MIGRATION.md) for details on recent dependency updates.
 - open VS Code on `htmlhint` and `htmlhint-server`
 
 ## Developing the server

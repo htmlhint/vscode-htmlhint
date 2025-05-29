@@ -3,7 +3,7 @@
   "displayName": "HTMLHint",
   "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
   "icon": "images/icon.png",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "publisher": "HTMLHint",
   "galleryBanner": {
     "color": "#333333",
@@ -26,7 +26,7 @@
     "Linters"
   ],
   "engines": {
-    "vscode": "^1.16.0"
+    "vscode": "^1.89.0"
   },
   "activationEvents": [
     "onFileSystem:file"
@@ -59,15 +59,15 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "node ./node_modules/typescript/bin/tsc -p ./",
-    "compile": "node ./node_modules/typescript/bin/tsc -p ./",
-    "watch": "node ./node_modules/typescript/bin/tsc -watch -p ./",
-    "postinstall": "node ./node_modules/vscode/bin/install"
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
-    "typescript": "2.9.2",
-    "vscode": "1.1.37",
-    "@types/node": "6.0.118"
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.89.0",
+    "vscode-test": "^1.6.1"
   },
   "dependencies": {
     "vscode-languageclient": "3.5.1"
