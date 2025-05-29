@@ -2,6 +2,11 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.1.0 (2025-05-28)
+
+Migrate extension to use @types/vscode which means fewer dependencies, better compatibility with future VS Code versions
+and more flexibility for testing
+
 ### v1.0.8 (2025-05-27)
 
 Update HTMLHint to v1.2.0

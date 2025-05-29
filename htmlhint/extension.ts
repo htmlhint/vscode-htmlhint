@@ -1,9 +1,8 @@
 import * as path from "path";
-import { workspace, Disposable, ExtensionContext } from "vscode";
+import { workspace, ExtensionContext } from "vscode";
 import {
   LanguageClient,
   LanguageClientOptions,
-  SettingMonitor,
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient";
@@ -43,14 +42,14 @@ export function activate(context: ExtensionContext) {
     },
   };
 
-  let forceDebug = false;
+  // Create the language client and start it
   let client = new LanguageClient(
     "HTML-hint",
     serverOptions,
-    clientOptions,
-    forceDebug,
+    clientOptions
   );
-  context.subscriptions.push(
-    new SettingMonitor(client, "htmlhint.enable").start(),
-  );
+
+  // Start the client and add it to the subscriptions
+  let disposable = client.start();
+  context.subscriptions.push(disposable);
 }

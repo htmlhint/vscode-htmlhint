@@ -4,9 +4,10 @@
     "target": "es6",
     "outDir": "out",
     "lib": ["es6", "dom"],
+    "types": ["node", "mocha"],
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "sourceMap": true,
-    "forceConsistentCasingInFileNames": true
+    "sourceMap": true
   },
-  "exclude": ["node_modules", "server"]
+  "include": ["suite/**/*.ts", "runTest.ts"]
 }
