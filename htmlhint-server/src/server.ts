@@ -78,7 +78,7 @@ function makeDiagnostic(
 }
 
 /**
- * Get the html-hint configuration settings for the given html file.  This method will take care of whether to use
+ * Get the HTMLHint configuration settings for the given HTML file.  This method will take care of whether to use
  * VS Code settings, or to use a .htmlhintrc file.
  */
 function getConfiguration(filePath: string): any {
@@ -121,7 +121,7 @@ function getConfiguration(filePath: string): any {
 }
 
 /**
- * Given the path of an html file, this function will look in current directory & parent directories
+ * Given the path of an HTML file, this function will look in current directory & parent directories
  * to find a .htmlhintrc file to use as the linter configuration.  The settings are
  */
 function findConfigForHtmlFile(base: string) {
