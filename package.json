@@ -21,7 +21,7 @@
     "test": "npm run prettier && npm run lint && cd htmlhint && npm i && cd ../htmlhint-server && npm i && npm run compile"
   },
   "dependencies": {
-    "vscode-languageclient": "^3.5.1"
+    "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
