@@ -26,7 +26,7 @@
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^20.17.52",
+    "@types/node": "^22.15.29",
     "@types/vscode": "^1.100.0",
     "@typescript-eslint/eslint-plugin": "6.7.0",
     "@typescript-eslint/parser": "6.7.0",
