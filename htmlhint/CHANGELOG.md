@@ -2,6 +2,10 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.3.0 (2025-06-01)
+
+- Update HTMLHint to v1.3.0
+
 ### v1.2.0 (2025-05-30)
 
 - Extension now can automatically validate your .htmlhintrc configuration file using JSON Schema (https://json.schemastore.org/htmlhint.json)
