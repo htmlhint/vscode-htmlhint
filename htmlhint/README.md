@@ -24,7 +24,7 @@ Errors in HTML files are highlighted with squiggles and you can hover over the s
 
 ## Rules
 
-The HTMLHint extension uses the default [rules](https://htmlhint.com/docs/user-guide/list-rules) provided by HTMLHint.
+The HTMLHint extension uses the default [rules](https://htmlhint.com/list-rules/) provided by HTMLHint.
 
 ```json
 {
@@ -45,7 +45,7 @@ The HTMLHint extension uses the default [rules](https://htmlhint.com/docs/user-g
 
 If you'd like to modify the rules, you can provide a `.htmlhintrc` file in the root of your project folder with a reduced ruleset or modified values.
 
-You can learn more about rule configuration at the HTMLHint [Usage page](https://htmlhint.com/docs/user-guide/usage/cli).
+You can learn more about rule configuration at the HTMLHint [Usage page](https://htmlhint.com/usage/cli/).
 
 ## Additional file types
 
@@ -53,7 +53,7 @@ By default, HTMLHint will run on any files associated with the "html" language s
 
 ### Option 1: Treating your file like any other HTML file
 
-If you would like the file type to be treated as any other HTML file (including syntax highlighting, as well as HTMLHint linting), you'll need to associate the extension with the HTML language service. Add the following to your VS Code [settings](https://code.visualstudio.com/docs/getstarted/settings), replacing `"*.ext"` with your file extension.
+If you would like the file type to be treated as any other HTML file (including syntax highlighting, as well as HTMLHint linting), you'll need to associate the extension with the HTML language service. Add the following to your VS Code [settings](https://code.visualstudio.com/docs/configure/settings), replacing `"*.ext"` with your file extension.
 
 ```json
 {
@@ -65,7 +65,7 @@ If you would like the file type to be treated as any other HTML file (including 
 
 ### Option 2: Associating HTMLHint extension with your file type
 
-If your file type already has an associated language service other than "html", and you'd like HTMLHint to process those file types, you will need to associate the HTMLHint extension with that language service. Add the following to your VS Code [settings](https://code.visualstudio.com/docs/getstarted/settings), replacing `"mylang"` with your language service. For example, if you want HTMLHint to process `.twig` files, you would use `"twig"`. Note that with this configuration, **you need to open an HTML file first** to activate the HTMLHint extension. Otherwise, you won't see any linter errors, (the extension is hard-coded to activate when the HTML language service activates).
+If your file type already has an associated language service other than "html", and you'd like HTMLHint to process those file types, you will need to associate the HTMLHint extension with that language service. Add the following to your VS Code [settings](https://code.visualstudio.com/docs/configure/settings), replacing `"mylang"` with your language service. For example, if you want HTMLHint to process `.twig` files, you would use `"twig"`. Note that with this configuration, **you need to open an HTML file first** to activate the HTMLHint extension. Otherwise, you won't see any linter errors, (the extension is hard-coded to activate when the HTML language service activates).
 
 ```json
 {

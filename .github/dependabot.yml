@@ -16,7 +16,7 @@ updates:
         update-types:
           - "patch"
     schedule:
-      interval: monthly
+      interval: weekly
     versioning-strategy: increase
     open-pull-requests-limit: 2
 
@@ -29,7 +29,7 @@ updates:
         update-types:
           - "patch"
     schedule:
-      interval: monthly
+      interval: weekly
     versioning-strategy: increase
     open-pull-requests-limit: 2
 
@@ -42,6 +42,6 @@ updates:
         update-types:
           - "patch"
     schedule:
-      interval: monthly
+      interval: weekly
     versioning-strategy: increase
     open-pull-requests-limit: 2
