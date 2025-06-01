@@ -35,8 +35,6 @@ ext install HTMLHint.vscode-htmlhint
 - Switch to the Debug viewlet
 - Select `Launch Client` from the drop down
 - Run the launch config
-
-See [MIGRATION.md](./MIGRATION.md) for details on recent dependency updates.
 - open VS Code on `htmlhint` and `htmlhint-server`
 
 ## Developing the server
