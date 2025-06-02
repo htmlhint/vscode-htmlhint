@@ -43,11 +43,7 @@ export function activate(context: ExtensionContext) {
   };
 
   // Create the language client and start it
-  let client = new LanguageClient(
-    "HTML-hint",
-    serverOptions,
-    clientOptions
-  );
+  let client = new LanguageClient("HTML-hint", serverOptions, clientOptions);
 
   // Start the client and add it to the subscriptions
   let disposable = client.start();
