@@ -1,7 +1,7 @@
 "use strict";
 
-/// <reference path="typings/node/node.d.ts" />
-/// <reference path="typings/htmlhint/htmlhint.d.ts" />
+/// <reference path="typings-custom/thenable.d.ts" />
+/// <reference path="typings-custom/htmlhint.d.ts" />
 
 import * as path from "path";
 import * as server from "vscode-languageserver";

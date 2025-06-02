@@ -18,7 +18,10 @@
     "lint": "eslint -c .eslintrc.js --ext .ts .",
     "prettier": "prettier --write \"**/*.{js,md,ts,yml}\"",
     "spellcheck": "npx cspell \"**/*.{html,js,json,md,ts,yml}\"",
-    "test": "npm run prettier && npm run lint && cd htmlhint && npm i && cd ../htmlhint-server && npm i && npm run compile"
+    "postinstall": "cd htmlhint && npm i && cd ../htmlhint-server && npm i",
+    "compile": "cd htmlhint-server && npm run compile && cd ../htmlhint && npm run compile",
+    "test": "npm run prettier && npm run lint && npm run compile",
+    "package": "cd htmlhint && npm run vscode:prepublish && vsce package"
   },
   "dependencies": {
     "vscode-languageclient": "^3.5.1"
@@ -36,7 +39,7 @@
     "mocha": "^11.5.0",
     "prettier": "3.5.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3",
+    "typescript": "^5.2.2",
     "vscode-test": "^1.6.1"
   },
   "engines": {

@@ -4,6 +4,8 @@
   "attr-value-double-quotes": true,
   "doctype-first": true,
   "html-lang-require": true,
+  "h1-require": true,
+  "main-require": true,
   "tag-pair": true,
   "spec-char-escape": true,
   "id-unique": true,

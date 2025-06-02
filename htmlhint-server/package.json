@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@types/node": "20.17.57",
-    "typescript": "^5.8.3"
+    "typescript": "^5.2.2"
   },
   "engines": {
     "node": "*"
