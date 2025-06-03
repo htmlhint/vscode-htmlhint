@@ -2,11 +2,11 @@
 
 Integrates the [HTMLHint](https://github.com/htmlhint/HTMLHint) static analysis tool into Visual Studio Code.
 
-![hero](https://github.com/htmlhint/vscode-htmlhint/raw/main/htmlhint/images/hero.png)
+![HTMLHint - VS Code Extension](https://github.com/htmlhint/vscode-htmlhint/raw/main/htmlhint/images/hero.png)
 
 ## Configuration
 
-The HTMLHint extension will attempt to use the locally installed HTMLHint module (the project-specific module if present, or a globally installed HTMLHint module). If a locally installed HTMLHint isn't available, the extension will use the embedded version (current version 1.2.0).
+The HTMLHint extension will attempt to use the locally installed HTMLHint module (the project-specific module if present, or a globally installed HTMLHint module). If a locally installed HTMLHint isn't available, the extension will use the embedded version (current version 1.4.0).
 
 To install a version to the local project folder, run `npm install --save-dev htmlhint`. To install a global version on the current machine, run `npm install --global htmlhint`.
 
