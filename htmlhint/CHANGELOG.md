@@ -2,6 +2,14 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.4.1 (2025-06-04)
+
+- Minor optimizations and code cleanup
+
+### v1.4.0 (2025-06-03)
+
+- Update HTMLHint to v1.4.0
+
 ### v1.3.0 (2025-06-01)
 
 - Update HTMLHint to v1.3.0
