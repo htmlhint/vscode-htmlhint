@@ -2,6 +2,10 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.4.2 (2025-06-04)
+
+- Fixes missing config file path option. You could now specify a custom path to your `.htmlhintrc` file in the extension settings. e.g. `"htmlhint.optionsFile": "your-project-subfolder/.htmlhintrc"`
+
 ### v1.4.1 (2025-06-04)
 
 - Minor optimizations and code cleanup
