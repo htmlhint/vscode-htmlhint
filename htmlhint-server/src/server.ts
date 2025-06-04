@@ -14,6 +14,7 @@ interface Settings {
     configFile: string;
     enable: boolean;
     options: any;
+    optionsFile: string;
   };
   [key: string]: any;
 }
@@ -109,6 +110,8 @@ function getConfiguration(filePath: string): any {
       Object.keys(settings.htmlhint.options).length > 0
     ) {
       options = settings.htmlhint.options;
+    } else if (settings.htmlhint && settings.htmlhint.optionsFile) {
+      options = loadConfigurationFile(settings.htmlhint.optionsFile);
     } else {
       options = findConfigForHtmlFile(filePath);
     }
