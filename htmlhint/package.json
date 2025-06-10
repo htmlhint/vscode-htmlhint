@@ -85,7 +85,7 @@
   },
   "dependencies": {
     "vscode-languageclient": "3.5.1",
-    "htmlhint": "^1.4.0",
+    "htmlhint": "^1.5.1",
     "strip-json-comments": "3.1.1"
   },
   "bundleDependencies": [
