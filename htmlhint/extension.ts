@@ -5,9 +5,11 @@ import {
   LanguageClientOptions,
   ServerOptions,
   TransportKind,
-} from "vscode-languageclient";
+} from "vscode-languageclient/node";
 
-export function activate(context: ExtensionContext) {
+let client: LanguageClient;
+
+export async function activate(_context: ExtensionContext) {
   // We need to go one level up since an extension compile the js code into
   // the output folder.
   let serverModulePath = path.join(__dirname, "..", "server", "server.js");
@@ -43,9 +45,20 @@ export function activate(context: ExtensionContext) {
   };
 
   // Create the language client and start it
-  let client = new LanguageClient("HTML-hint", serverOptions, clientOptions);
+  client = new LanguageClient(
+    "HTML-hint",
+    "HTML-hint",
+    serverOptions,
+    clientOptions,
+  );
 
-  // Start the client and add it to the subscriptions
-  let disposable = client.start();
-  context.subscriptions.push(disposable);
+  // Start the client
+  await client.start();
+}
+
+export async function deactivate(): Promise<void> {
+  if (!client) {
+    return;
+  }
+  return client.stop();
 }

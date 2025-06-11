@@ -3,7 +3,7 @@
   "displayName": "HTMLHint",
   "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
   "icon": "images/icon.png",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "publisher": "HTMLHint",
   "galleryBanner": {
     "color": "#333333",
@@ -29,7 +29,8 @@
     "vscode": "^1.89.0"
   },
   "activationEvents": [
-    "onFileSystem:file"
+    "onLanguage:html",
+    "onLanguage:htm"
   ],
   "main": "./out/extension",
   "contributes": {
@@ -75,7 +76,7 @@
     "vscode:prepublish": "npm run compile && npm run bundle-dependencies",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "bundle-dependencies": "npm install --no-package-lock --no-save htmlhint@^1.5.1 strip-json-comments@3.1.1 vscode-languageserver@3.5.1"
+    "bundle-dependencies": "npm install --no-package-lock --no-save htmlhint@^1.5.1 strip-json-comments@3.1.1 vscode-languageserver@9.0.1 vscode-languageserver-textdocument@^1.0.12"
   },
   "devDependencies": {
     "typescript": "^5.2.2",
@@ -84,16 +85,17 @@
     "vscode-test": "^1.6.1"
   },
   "dependencies": {
-    "vscode-languageclient": "3.5.1",
+    "vscode-languageclient": "9.0.1",
     "htmlhint": "^1.5.1",
     "strip-json-comments": "3.1.1",
-    "vscode-languageserver": "3.5.1"
+    "vscode-languageserver": "9.0.1"
   },
   "bundleDependencies": [
     "vscode-languageclient",
     "htmlhint",
     "strip-json-comments",
-    "vscode-languageserver"
+    "vscode-languageserver",
+    "vscode-languageserver-textdocument"
   ],
   "volta": {
     "node": "20.19.2"

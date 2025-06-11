@@ -4,7 +4,26 @@
 /// <reference path="typings-custom/htmlhint.d.ts" />
 
 import * as path from "path";
-import * as server from "vscode-languageserver";
+import {
+  createConnection,
+  TextDocuments,
+  Diagnostic,
+  DiagnosticSeverity,
+  ProposedFeatures,
+  InitializeParams,
+  DidChangeConfigurationNotification,
+  CompletionItem,
+  CompletionItemKind,
+  TextDocumentPositionParams,
+  TextDocumentSyncKind,
+  InitializeResult,
+  Connection,
+  ErrorMessageTracker,
+  CancellationToken,
+  ResponseError,
+  InitializeError,
+} from "vscode-languageserver/node";
+import { TextDocument } from "vscode-languageserver-textdocument";
 import * as htmlhint from "htmlhint";
 import fs = require("fs");
 let stripJsonComments: any = require("strip-json-comments");
@@ -80,12 +99,9 @@ function getRange(error: htmlhint.Error, lines: string[]): any {
 /**
  * Given an htmlhint.Error type return a VS Code server Diagnostic object
  */
-function makeDiagnostic(
-  problem: htmlhint.Error,
-  lines: string[],
-): server.Diagnostic {
+function makeDiagnostic(problem: htmlhint.Error, lines: string[]): Diagnostic {
   return {
-    severity: server.DiagnosticSeverity.Warning,
+    severity: DiagnosticSeverity.Warning,
     message: problem.message,
     range: getRange(problem, lines),
     code: problem.rule.id,
@@ -193,21 +209,19 @@ function isErrorWithMessage(err: unknown): err is { message: string } {
   );
 }
 
-function getErrorMessage(err: unknown, document: server.TextDocument): string {
+function getErrorMessage(err: unknown, document: TextDocument): string {
   if (isErrorWithMessage(err)) {
     return err.message;
   }
 
-  return `An unknown error occurred while validating file: ${server.Files.uriToFilePath(
-    document.uri,
-  )}`;
+  return `An unknown error occurred while validating file: ${document.uri}`;
 }
 
 function validateAllTextDocuments(
-  connection: server.IConnection,
-  documents: server.TextDocument[],
+  connection: Connection,
+  documents: TextDocument[],
 ): void {
-  let tracker = new server.ErrorMessageTracker();
+  let tracker = new ErrorMessageTracker();
   documents.forEach((document) => {
     try {
       validateTextDocument(connection, document);
@@ -219,8 +233,8 @@ function validateAllTextDocuments(
 }
 
 function validateTextDocument(
-  connection: server.IConnection,
-  document: server.TextDocument,
+  connection: Connection,
+  document: TextDocument,
 ): void {
   try {
     doValidate(connection, document);
@@ -229,8 +243,8 @@ function validateTextDocument(
   }
 }
 
-let connection: server.IConnection = server.createConnection();
-let documents: server.TextDocuments = new server.TextDocuments();
+let connection: Connection = createConnection(ProposedFeatures.all);
+let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 documents.listen(connection);
 
 function trace(message: string, verbose?: string): void {
@@ -238,7 +252,7 @@ function trace(message: string, verbose?: string): void {
 }
 
 connection.onInitialize(
-  (params: server.InitializeParams, token: server.CancellationToken) => {
+  (params: InitializeParams, token: CancellationToken) => {
     let rootFolder = params.rootPath;
     let initOptions: {
       nodePath: string;
@@ -249,47 +263,26 @@ connection.onInitialize(
         : undefined
       : undefined;
 
-    const result = server.Files.resolveModule2(
-      rootFolder,
-      "htmlhint",
-      nodePath,
-      trace,
-    ).then(
-      (
-        value,
-      ):
-        | server.InitializeResult
-        | server.ResponseError<server.InitializeError> => {
-        linter = value.default || value.HTMLHint || value;
-        //connection.window.showInformationMessage(`onInitialize() - found local htmlhint (version ! ${value.HTMLHint.version})`);
+    // Since Files API is no longer available, we'll use embedded htmlhint directly
+    linter = htmlhint.default || htmlhint.HTMLHint || htmlhint;
 
-        let result: server.InitializeResult = {
-          capabilities: { textDocumentSync: documents.syncKind },
-        };
-        return result;
+    let result: InitializeResult = {
+      capabilities: {
+        textDocumentSync: TextDocumentSyncKind.Incremental,
       },
-      (error) => {
-        // didn't find htmlhint in project or global, so use embedded version.
-        linter = htmlhint.default || htmlhint.HTMLHint || htmlhint;
-        //connection.window.showInformationMessage(`onInitialize() using embedded htmlhint(version ! ${linter.version})`);
-        let result: server.InitializeResult = {
-          capabilities: { textDocumentSync: documents.syncKind },
-        };
-        return result;
-      },
-    );
-
-    return result as Thenable<server.InitializeResult>;
+    };
+    return result;
   },
 );
 
-function doValidate(
-  connection: server.IConnection,
-  document: server.TextDocument,
-): void {
+function doValidate(connection: Connection, document: TextDocument): void {
   try {
     let uri = document.uri;
-    let fsPath = server.Files.uriToFilePath(uri);
+    // Convert URI to file path manually since Files API is not available
+    let fsPath = uri.replace(/^file:\/\//, "");
+    if (process.platform === "win32" && fsPath.startsWith("/")) {
+      fsPath = fsPath.substring(1);
+    }
     let contents = document.getText();
     let lines = contents.split("\n");
 
@@ -297,7 +290,7 @@ function doValidate(
 
     let errors: htmlhint.Error[] = linter.verify(contents, config);
 
-    let diagnostics: server.Diagnostic[] = [];
+    let diagnostics: Diagnostic[] = [];
     if (errors.length > 0) {
       errors.forEach((each) => {
         diagnostics.push(makeDiagnostic(each, lines));
@@ -334,8 +327,13 @@ connection.onDidChangeConfiguration((params) => {
 // The watched .htmlhintrc has changed. Clear out the last loaded config, and revalidate all documents.
 connection.onDidChangeWatchedFiles((params) => {
   for (let i = 0; i < params.changes.length; i++) {
-    htmlhintrcOptions[server.Files.uriToFilePath(params.changes[i].uri)] =
-      undefined;
+    // Convert URI to file path manually since Files API is not available
+    let uri = params.changes[i].uri;
+    let fsPath = uri.replace(/^file:\/\//, "");
+    if (process.platform === "win32" && fsPath.startsWith("/")) {
+      fsPath = fsPath.substring(1);
+    }
+    htmlhintrcOptions[fsPath] = undefined;
   }
   validateAllTextDocuments(connection, documents.all());
 });
