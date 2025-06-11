@@ -16,6 +16,12 @@ import {
   Connection,
   ErrorMessageTracker,
   CancellationToken,
+  CodeActionParams,
+  Command,
+  CodeAction,
+  CodeActionKind,
+  TextEdit,
+  WorkspaceEdit,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as htmlhint from "htmlhint";
@@ -99,6 +105,12 @@ function makeDiagnostic(problem: htmlhint.Error, lines: string[]): Diagnostic {
     message: problem.message,
     range: getRange(problem, lines),
     code: problem.rule.id,
+    source: 'htmlhint',
+    data: {
+      ruleId: problem.rule.id,
+      line: problem.line,
+      col: problem.col,
+    }
   };
 }
 
@@ -245,6 +257,210 @@ function trace(message: string, verbose?: string): void {
   connection.tracer.log(message, verbose);
 }
 
+/**
+ * Create auto-fix action for html-lang-require rule
+ */
+function createHtmlLangRequireFix(document: TextDocument, diagnostic: Diagnostic): CodeAction | null {
+  if (!diagnostic.data || diagnostic.data.ruleId !== 'html-lang-require') {
+    return null;
+  }
+
+  const text = document.getText();
+  const htmlTagMatch = text.match(/<html(\s[^>]*)?>/i);
+
+  if (!htmlTagMatch) {
+    return null;
+  }
+
+  const htmlTagStart = htmlTagMatch.index!;
+  const htmlTag = htmlTagMatch[0];
+
+  // Check if lang attribute already exists
+  const langAttrMatch = htmlTag.match(/\slang\s*=\s*["'][^"']*["']/i);
+  if (langAttrMatch) {
+    return null; // Lang attribute already exists
+  }
+
+  // Calculate position to insert lang attribute
+  const insertPosition = document.positionAt(htmlTagStart + 5); // After "<html"
+  const newText = ' lang="en"';
+
+  const edit: TextEdit = {
+    range: {
+      start: insertPosition,
+      end: insertPosition
+    },
+    newText: newText
+  };
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: [edit]
+    }
+  };
+
+  return {
+    title: 'Add lang="en" attribute to html tag',
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true
+  };
+}
+
+/**
+ * Create auto-fix action for title-require rule
+ */
+function createTitleRequireFix(document: TextDocument, diagnostic: Diagnostic): CodeAction | null {
+  if (!diagnostic.data || diagnostic.data.ruleId !== 'title-require') {
+    return null;
+  }
+
+  const text = document.getText();
+  const headMatch = text.match(/<head(\s[^>]*)?>([\s\S]*?)<\/head>/i);
+
+  if (!headMatch) {
+    return null;
+  }
+
+  const headContent = headMatch[2];
+  const titleMatch = headContent.match(/<title(\s[^>]*)?>/i);
+
+  if (titleMatch) {
+    return null; // Title tag already exists
+  }
+
+  // Find a good position to insert the title tag (after meta charset if it exists, otherwise at the beginning of head)
+  const headStart = headMatch.index! + headMatch[0].indexOf('>') + 1;
+  const metaCharsetMatch = headContent.match(/<meta\s+charset\s*=\s*["'][^"']*["'][^>]*>/i);
+
+  let insertPosition: number;
+  let newText: string;
+
+  if (metaCharsetMatch) {
+    const metaCharsetEnd = headStart + metaCharsetMatch.index! + metaCharsetMatch[0].length;
+    insertPosition = metaCharsetEnd;
+    newText = '\n    <title>Document</title>';
+  } else {
+    insertPosition = headStart;
+    newText = '\n    <title>Document</title>';
+  }
+
+  const edit: TextEdit = {
+    range: {
+      start: document.positionAt(insertPosition),
+      end: document.positionAt(insertPosition)
+    },
+    newText: newText
+  };
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: [edit]
+    }
+  };
+
+  return {
+    title: 'Add <title> tag',
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true
+  };
+}
+
+/**
+ * Create auto-fix action for attr-value-double-quotes rule
+ */
+function createAttrValueDoubleQuotesFix(document: TextDocument, diagnostic: Diagnostic): CodeAction | null {
+  if (!diagnostic.data || diagnostic.data.ruleId !== 'attr-value-double-quotes') {
+    return null;
+  }
+
+  const text = document.getText();
+  const lines = text.split('\n');
+  const line = lines[diagnostic.data.line - 1];
+
+  if (!line) {
+    return null;
+  }
+
+  // Find single-quoted attributes and replace with double quotes
+  const singleQuotePattern = /(\w+)='([^']*)'/g;
+  let match;
+  const edits: TextEdit[] = [];
+
+  while ((match = singleQuotePattern.exec(line)) !== null) {
+    const startCol = match.index;
+    const endCol = startCol + match[0].length;
+    const attrName = match[1];
+    const attrValue = match[2];
+
+    // Check if this match is at or near the diagnostic position
+    const diagnosticCol = diagnostic.data.col - 1;
+    if (Math.abs(startCol - diagnosticCol) <= 10) {
+      const lineStartPos = document.positionAt(text.split('\n').slice(0, diagnostic.data.line - 1).join('\n').length + (diagnostic.data.line > 1 ? 1 : 0));
+      const startPos = { line: lineStartPos.line, character: startCol };
+      const endPos = { line: lineStartPos.line, character: endCol };
+
+      edits.push({
+        range: { start: startPos, end: endPos },
+        newText: `${attrName}="${attrValue}"`
+      });
+      break;
+    }
+  }
+
+  if (edits.length === 0) {
+    return null;
+  }
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: edits
+    }
+  };
+
+  return {
+    title: 'Change attribute quotes to double quotes',
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true
+  };
+}
+
+/**
+ * Create auto-fix actions for supported rules
+ */
+function createAutoFixes(document: TextDocument, diagnostics: Diagnostic[]): CodeAction[] {
+  const actions: CodeAction[] = [];
+
+  for (const diagnostic of diagnostics) {
+    if (!diagnostic.data || !diagnostic.data.ruleId) {
+      continue;
+    }
+
+    let fix: CodeAction | null = null;
+
+    switch (diagnostic.data.ruleId) {
+      case 'html-lang-require':
+        fix = createHtmlLangRequireFix(document, diagnostic);
+        break;
+      case 'title-require':
+        fix = createTitleRequireFix(document, diagnostic);
+        break;
+      case 'attr-value-double-quotes':
+        fix = createAttrValueDoubleQuotesFix(document, diagnostic);
+        break;
+      // Add more rules here as needed
+    }
+
+    if (fix) {
+      actions.push(fix);
+    }
+  }
+
+  return actions;
+}
+
 connection.onInitialize(
   (params: InitializeParams, token: CancellationToken) => {
     let rootFolder = params.rootPath;
@@ -263,6 +479,9 @@ connection.onInitialize(
     let result: InitializeResult = {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
+        codeActionProvider: {
+          codeActionKinds: [CodeActionKind.QuickFix]
+        }
       },
     };
     return result;
@@ -330,6 +549,21 @@ connection.onDidChangeWatchedFiles((params) => {
     htmlhintrcOptions[fsPath] = undefined;
   }
   validateAllTextDocuments(connection, documents.all());
+});
+
+// Handle code action requests for auto-fixes
+connection.onCodeAction((params: CodeActionParams) => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return [];
+  }
+
+  // Filter diagnostics to only include HTMLHint diagnostics in the requested range
+  const htmlhintDiagnostics = params.context.diagnostics.filter(
+    diagnostic => diagnostic.source === undefined || diagnostic.source === 'htmlhint'
+  );
+
+  return createAutoFixes(document, htmlhintDiagnostics);
 });
 
 connection.listen();
