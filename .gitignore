@@ -5,3 +5,7 @@ node_modules
 .DS_Store
 *.vsix
 *.zip
+
+# TypeScript build info files
+.tsbuildinfo
+*/.tsbuildinfo

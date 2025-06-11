@@ -1,13 +1,30 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "moduleResolution": "node",
     "outDir": "out",
-    "lib": ["es6", "dom"],
-    "types": ["node", "mocha"],
+    "sourceMap": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "sourceMap": true
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "mocha"],
+    "skipLibCheck": true
   },
-  "include": ["suite/**/*.ts", "runTest.ts"]
+  "include": ["suite/**/*.ts", "runTest.ts"],
+  "exclude": ["node_modules"]
 }

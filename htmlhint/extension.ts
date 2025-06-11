@@ -26,7 +26,7 @@ export function activate(context: ExtensionContext) {
 
   // Get file types to lint from user settings
   let config = workspace.getConfiguration("htmlhint");
-  let languages: string[] = config.get("documentSelector");
+  let languages: string[] = config.get("documentSelector") || ["html", "htm"];
   let documentSelector = languages.map((language) => ({
     language,
     scheme: "file",

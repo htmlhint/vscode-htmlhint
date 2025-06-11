@@ -1,12 +1,37 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "moduleResolution": "node",
     "outDir": "out",
-    "lib": ["es6", "dom"],
-    "skipLibCheck": true,
     "sourceMap": true,
-    "forceConsistentCasingInFileNames": true
+    "declaration": true,
+    "declarationMap": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitOverride": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo"
   },
-  "exclude": ["node_modules", "server"]
+  "include": ["extension.ts", "**/*.ts"],
+  "exclude": ["node_modules", "server", "out", "**/*.test.ts", "**/*.spec.ts"]
 }
