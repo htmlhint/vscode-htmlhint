@@ -11,17 +11,11 @@ import {
   DiagnosticSeverity,
   ProposedFeatures,
   InitializeParams,
-  DidChangeConfigurationNotification,
-  CompletionItem,
-  CompletionItemKind,
-  TextDocumentPositionParams,
   TextDocumentSyncKind,
   InitializeResult,
   Connection,
   ErrorMessageTracker,
   CancellationToken,
-  ResponseError,
-  InitializeError,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as htmlhint from "htmlhint";
