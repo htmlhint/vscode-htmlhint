@@ -136,7 +136,7 @@ function findConfigForHtmlFile(base: string) {
       base = path.dirname(base);
     }
 
-    while (base && !options) {
+    while (base) {
       let tmpConfigFile = path.resolve(base + path.sep, ".htmlhintrc");
 
       // undefined means we haven't tried to load the config file at this path, so try to load it.
