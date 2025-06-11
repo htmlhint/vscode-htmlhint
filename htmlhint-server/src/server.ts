@@ -19,7 +19,7 @@ interface Settings {
   [key: string]: any;
 }
 
-let settings: Settings = null;
+let settings: Settings | null = null;
 let linter: any = null;
 
 /**
@@ -34,6 +34,20 @@ let htmlhintrcOptions: any = {};
  */
 function getRange(error: htmlhint.Error, lines: string[]): any {
   let line = lines[error.line - 1];
+  if (!line) {
+    // Fallback if line doesn't exist
+    return {
+      start: {
+        line: error.line - 1,
+        character: error.col - 1,
+      },
+      end: {
+        line: error.line - 1,
+        character: error.col - 1,
+      },
+    };
+  }
+
   let isWhitespace = false;
   let curr = error.col;
   while (curr < line.length && !isWhitespace) {
@@ -84,7 +98,7 @@ function makeDiagnostic(
  */
 function getConfiguration(filePath: string): any {
   let options: any;
-  if (settings.htmlhint) {
+  if (settings?.htmlhint) {
     if (
       settings.htmlhint.configFile &&
       settings.htmlhint.options &&
@@ -159,7 +173,7 @@ function findConfigForHtmlFile(base: string) {
 /**
  * Given a path to a .htmlhintrc file, load it into a javascript object and return it.
  */
-function loadConfigurationFile(configFile): any {
+function loadConfigurationFile(configFile: string): any {
   let ruleset: any = null;
   if (fs.existsSync(configFile)) {
     let config = fs.readFileSync(configFile, "utf8");
@@ -170,16 +184,23 @@ function loadConfigurationFile(configFile): any {
   return ruleset;
 }
 
-function getErrorMessage(err: any, document: server.TextDocument): string {
-  let result: string = null;
-  if (typeof err.message === "string" || err.message instanceof String) {
-    result = <string>err.message;
-  } else {
-    result = `An unknown error occurred while validating file: ${server.Files.uriToFilePath(
-      document.uri,
-    )}`;
+function isErrorWithMessage(err: unknown): err is { message: string } {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "message" in err &&
+    typeof (err as Record<string, unknown>).message === "string"
+  );
+}
+
+function getErrorMessage(err: unknown, document: server.TextDocument): string {
+  if (isErrorWithMessage(err)) {
+    return err.message;
   }
-  return result;
+
+  return `An unknown error occurred while validating file: ${server.Files.uriToFilePath(
+    document.uri,
+  )}`;
 }
 
 function validateAllTextDocuments(
@@ -284,10 +305,8 @@ function doValidate(
     }
     connection.sendDiagnostics({ uri, diagnostics });
   } catch (err) {
-    let message: string = null;
-    if (typeof err.message === "string" || err.message instanceof String) {
-      message = <string>err.message;
-      throw new Error(message);
+    if (isErrorWithMessage(err)) {
+      throw new Error(err.message);
     }
     throw err;
   }
