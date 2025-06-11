@@ -24,7 +24,7 @@
     "package": "cd htmlhint && npm run vscode:prepublish && vsce package"
   },
   "dependencies": {
-    "vscode-languageclient": "^3.5.1"
+    "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
