@@ -2,6 +2,10 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.6.1 (2025-06-12)
+
+- Reduced file-size and minor optimizations
+
 ### v1.6.0 (2025-06-12)
 
 - Add autofix for `alt-require`

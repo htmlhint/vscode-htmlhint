@@ -4,6 +4,7 @@
     "autobuild",
     "codeql",
     "coliff",
+    "dylib",
     "fnames",
     "htmlhint",
     "htmlhintrc",
