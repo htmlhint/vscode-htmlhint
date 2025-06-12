@@ -40,7 +40,10 @@ export async function activate(_context: ExtensionContext) {
     diagnosticCollectionName: "htmlhint",
     synchronize: {
       configurationSection: "htmlhint",
-      fileEvents: workspace.createFileSystemWatcher("**/.htmlhintrc"),
+      fileEvents: [
+        workspace.createFileSystemWatcher("**/.htmlhintrc"),
+        workspace.createFileSystemWatcher("**/.htmlhintrc.json"),
+      ],
     },
   };
 
