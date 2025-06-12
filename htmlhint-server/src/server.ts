@@ -1025,6 +1025,91 @@ function createMetaViewportRequireFix(
 }
 
 /**
+ * Create auto-fix action for meta-description-require rule
+ */
+function createMetaDescriptionRequireFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  if (
+    !diagnostic.data ||
+    diagnostic.data.ruleId !== "meta-description-require"
+  ) {
+    return null;
+  }
+
+  const text = document.getText();
+  const headMatch = text.match(/<head(\s[^>]*)?>([\s\S]*?)<\/head>/i);
+
+  if (!headMatch) {
+    return null;
+  }
+
+  const headContent = headMatch[2];
+  const descriptionMatch = headContent.match(
+    /<meta\s+name\s*=\s*["']description["'][^>]*>/i,
+  );
+
+  if (descriptionMatch) {
+    return null; // Description meta tag already exists
+  }
+
+  // Find a good position to insert description meta tag (after charset and viewport if they exist, otherwise at the beginning of head)
+  const headStart = headMatch.index! + headMatch[0].indexOf(">") + 1;
+  const metaCharsetMatch = headContent.match(
+    /<meta\s+charset\s*=\s*["'][^"']*["'][^>]*>/i,
+  );
+  const metaViewportMatch = headContent.match(
+    /<meta\s+name\s*=\s*["']viewport["'][^>]*>/i,
+  );
+
+  let insertPosition: number;
+  let newText: string;
+
+  if (metaViewportMatch) {
+    // Insert after viewport meta tag
+    const metaViewportEnd =
+      headStart + metaViewportMatch.index! + metaViewportMatch[0].length;
+    insertPosition = metaViewportEnd;
+    newText =
+      '\n    <meta name="description" content="Enter page description here">';
+  } else if (metaCharsetMatch) {
+    // Insert after charset meta tag
+    const metaCharsetEnd =
+      headStart + metaCharsetMatch.index! + metaCharsetMatch[0].length;
+    insertPosition = metaCharsetEnd;
+    newText =
+      '\n    <meta name="description" content="Enter page description here">';
+  } else {
+    // Insert at the beginning of head
+    insertPosition = headStart;
+    newText =
+      '\n    <meta name="description" content="Enter page description here">';
+  }
+
+  const edit: TextEdit = {
+    range: {
+      start: document.positionAt(insertPosition),
+      end: document.positionAt(insertPosition),
+    },
+    newText: newText,
+  };
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: [edit],
+    },
+  };
+
+  return {
+    title: 'Add <meta name="description"> tag',
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true,
+  };
+}
+
+/**
  * Create auto-fix action for button-type-require rule
  */
 function createButtonTypeRequireFix(
@@ -1242,6 +1327,9 @@ function createAutoFixes(
         break;
       case "meta-viewport-require":
         fix = createMetaViewportRequireFix(document, diagnostic);
+        break;
+      case "meta-description-require":
+        fix = createMetaDescriptionRequireFix(document, diagnostic);
         break;
       case "button-type-require":
         fix = createButtonTypeRequireFix(document, diagnostic);
