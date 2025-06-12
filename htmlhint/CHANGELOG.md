@@ -2,6 +2,27 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.6.0 (2025-06-12)
+
+- Add autofix for `alt-require`
+- Add autofix for `attr-lowercase`
+- Add autofix for `attr-no-unnecessary-whitespace`
+- Add autofix for `attr-value-double-quotes`
+- Add autofix for `button-type-require`
+- Add autofix for `doctype-first`
+- Add autofix for `doctype-html5`
+- Add autofix for `html-lang-require`
+- Add autofix for `meta-charset-require`
+- Add autofix for `meta-viewport-require`
+- Add autofix for `tag-self-close`
+- Add autofix for `tagname-lowercase`
+- Add autofix for `title-require`
+- Many under the hood improvements for performance and stability
+
+### v1.5.0 (2025-06-11)
+
+- Update HTMLHint to v1.5.1
+
 ### v1.4.2 (2025-06-04)
 
 - Fixes missing config file path option. You could now specify a custom path to your `.htmlhintrc` file in the extension settings. e.g. `"htmlhint.optionsFile": "your-project-subfolder/.htmlhintrc"`
@@ -20,7 +41,7 @@ All notable changes to the "vscode-htmlhint" extension will be documented in thi
 
 ### v1.2.0 (2025-05-30)
 
-- Extension now can automatically validate your .htmlhintrc configuration file using JSON Schema (https://json.schemastore.org/htmlhint.json)
+- Extension now can automatically validate your `.htmlhintrc` configuration file using JSON Schema (https://json.schemastore.org/htmlhint.json)
 
 ### v1.1.0 (2025-05-28)
 

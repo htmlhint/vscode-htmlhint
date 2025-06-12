@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/htmlhint"],
+      "outFiles": ["${workspaceFolder}/htmlhint/out/**/*.js"]
+    },
+    {
+      "name": "Extension Tests",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/htmlhint",
+        "--extensionTestsPath=${workspaceFolder}/htmlhint/out/test/suite/index"
+      ],
+      "outFiles": ["${workspaceFolder}/htmlhint/out/**/*.js"]
+    }
+  ]
+}

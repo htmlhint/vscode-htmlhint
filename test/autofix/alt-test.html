@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alt Attribute Test</title>
+</head>
+<body>
+    <!-- Test case 1: Regular img tag (should become: <img src="test1.jpg" alt="">) -->
+    <img src="test1.jpg" alt="">
+
+    <!-- Test case 2: Self-closing img tag (should become: <img src="test2.jpg" alt="" />) -->
+    <img src="test2.jpg" />
+
+    <!-- Test case 3: Img with other attributes (should become: <img src="test3.jpg" class="photo" alt="">) -->
+    <img src="test3.jpg" class="photo">
+
+    <!-- Test case 4: Input type image (should become: <input type="image" src="button.jpg" alt="">) -->
+    <input type="image" src="button.jpg" />
+
+    <!-- Test case 5: Area with href (should become: <area href="#section1" alt="">) -->
+    <area href="#section1">
+</body>
+</html>
