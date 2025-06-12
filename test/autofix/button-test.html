@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Type Test</title>
+</head>
+<body>
+    <!-- Button without type attribute - should trigger button-type-require -->
+    <button>Click Me</button>
+
+    <!-- Button with onclick but no type - should trigger button-type-require -->
+    <button onclick="doSomething()">Submit</button>
+
+    <!-- Button with class but no type - should trigger button-type-require -->
+    <button class="primary">Primary Button</button>
+
+    <!-- Button with type already set - should NOT trigger -->
+    <button type="button">Already Has Type</button>
+</body>
+</html>

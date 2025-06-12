@@ -18,6 +18,8 @@ The HTMLHint extension will run HTMLHint on your open HTML files and report the 
 
 Errors in HTML files are highlighted with squiggles and you can hover over the squiggles to see the error message.
 
+Many problems can now be fixed automatically by clicking on the lightbulb icon in problems panel or right-clicking on the error in the HTML file and selecting "Quick Fix".
+
 ![hover](https://github.com/htmlhint/vscode-htmlhint/raw/main/htmlhint/images/hover.png)
 
 > **Note:** HTMLHint will only analyze open HTML files and does not search for HTML files in your project folder.
@@ -93,9 +95,12 @@ Here's an example using the `htmlhint.documentSelector` and `htmlhint.options` s
   "twig"
 ],
 "htmlhint.options": {
-  "tagname-lowercase": false,
   "attr-lowercase": true,
   "attr-value-double-quotes":  true,
-  "doctype-first": true
+  "doctype-first": true,
+  "meta-charset-require": true,
+  "meta-viewport-require": true,
+  "tagname-lowercase": false,
+  "title-require": true
 }
 ```

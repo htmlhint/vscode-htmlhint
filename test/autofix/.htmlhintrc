@@ -1,0 +1,20 @@
+{
+  "alt-require": true,
+  "attr-lowercase": true,
+  "attr-no-unnecessary-whitespace": true,
+  "button-type-require": true,
+  "attr-value-double-quotes": true,
+  "doctype-first": true,
+  "doctype-html5": true,
+  "html-lang-require": true,
+  "id-unique": true,
+  "meta-charset-require": true,
+  "meta-description-require": true,
+  "meta-viewport-require": true,
+  "spec-char-escape": true,
+  "src-not-empty": true,
+  "tag-pair": true,
+  "tag-self-close": true,
+  "tagname-lowercase": true,
+  "title-require": true
+}

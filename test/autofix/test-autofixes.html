@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Missing meta charset and viewport -->
+  </head>
+  <body>
+    <!-- Uppercase tags and attributes -->
+    <div class="container" id="main">
+      <!-- Missing alt attributes -->
+      <img src="test.jpg" />
+      <img src="test2.jpg" />
+
+      <!-- Input with type=image missing alt -->
+      <input type="image" src="button.jpg" />
+
+      <!-- Area with href missing alt -->
+      <area href="#section1" />
+
+      <!-- Buttons missing type attribute -->
+      <button onclick="doSomething()">Click Me</button>
+      <button class="primary">Submit</button>
+
+      <!-- Void elements missing self-closing slashes -->
+      <br>
+      <hr>
+      <input type="text" name="username">
+      <meta name="keywords" content="test">
+
+      <!-- Attribute whitespace issues -->
+      <div class=" test" id="test-div">
+        <span style="color: red">Test</span>
+      </div>
+
+      <!-- Mix of issues -->
+      <p class =" paragraph" id = "para1">
+        This is a test paragraph with <a href="link.html">a link</a>.
+      </p>
+    </div>
+
+    <!-- More void elements -->
+    <img src="footer.jpg">
+    <br />
+  </body>
+</html>
