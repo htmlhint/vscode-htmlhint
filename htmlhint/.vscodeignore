@@ -52,11 +52,16 @@ images/status-bar.png
 **/node_modules/**/*.ts
 **/node_modules/**/tsconfig.json
 **/node_modules/**/package-lock.json
+**/node_modules/**/.npmrc
 **/node_modules/**/yarn.lock
 **/node_modules/**/.gitignore
 **/node_modules/**/.npmignore
 **/node_modules/**/.eslintrc*
-**/node_modules/**/*.config.js
+**/node_modules/**/webpack.config.js
+**/node_modules/**/rollup.config.js
+**/node_modules/**/jest.config.js
+**/node_modules/**/babel.config.js
+**/node_modules/**/vite.config.js
 **/node_modules/**/example/**
 **/node_modules/**/examples/**
 **/node_modules/**/docs/**
