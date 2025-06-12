@@ -1285,11 +1285,37 @@ connection.onInitialize(
         codeActionProvider: {
           codeActionKinds: [CodeActionKind.QuickFix],
         },
+        workspace: {
+          workspaceFolders: {
+            supported: true,
+          },
+        },
       },
     };
     return result;
   },
 );
+
+// Set up file watchers and request initial configuration after initialization
+connection.onInitialized(() => {
+  trace("[DEBUG] Server initialized, requesting initial configuration");
+
+  // Request initial configuration
+  connection.workspace
+    .getConfiguration("htmlhint")
+    .then((config) => {
+      trace("[DEBUG] Initial configuration loaded");
+      settings = { htmlhint: config };
+
+      // Validate all open documents with the initial configuration
+      validateAllTextDocuments(connection, documents.all());
+    })
+    .catch((error) => {
+      trace("[DEBUG] Failed to load initial configuration: " + error);
+      // Validate with default configuration
+      validateAllTextDocuments(connection, documents.all());
+    });
+});
 
 function doValidate(connection: Connection, document: TextDocument): void {
   try {
@@ -1346,21 +1372,39 @@ connection.onDidCloseTextDocument((event) => {
 
 // The VS Code htmlhint settings have changed. Revalidate all documents.
 connection.onDidChangeConfiguration((params) => {
-  // trace(`[DEBUG] Configuration changed`);
-  settings = params.settings;
+  trace(`[DEBUG] Configuration changed`);
 
-  // Clear all cached config files when settings change
-  Object.keys(htmlhintrcOptions).forEach((configPath) => {
-    htmlhintrcOptions[configPath] = undefined;
-  });
+  // Request the updated configuration from the client
+  connection.workspace
+    .getConfiguration("htmlhint")
+    .then((config) => {
+      trace(`[DEBUG] Updated configuration loaded: ${JSON.stringify(config)}`);
+      settings = { htmlhint: config };
 
-  // trace(`[DEBUG] Triggering revalidation due to settings change`);
-  validateAllTextDocuments(connection, documents.all());
+      // Clear all cached config files when settings change
+      Object.keys(htmlhintrcOptions).forEach((configPath) => {
+        htmlhintrcOptions[configPath] = undefined;
+      });
+
+      trace(`[DEBUG] Triggering revalidation due to settings change`);
+      validateAllTextDocuments(connection, documents.all());
+    })
+    .catch((error) => {
+      trace(`[DEBUG] Failed to load updated configuration: ${error}`);
+      // Fall back to params.settings if available
+      if (params.settings) {
+        settings = params.settings;
+        Object.keys(htmlhintrcOptions).forEach((configPath) => {
+          htmlhintrcOptions[configPath] = undefined;
+        });
+        validateAllTextDocuments(connection, documents.all());
+      }
+    });
 });
 
 // The watched .htmlhintrc has changed. Clear out the last loaded config, and revalidate all documents.
 connection.onDidChangeWatchedFiles((params) => {
-  // trace(`[DEBUG] File watcher triggered with ${params.changes.length} changes`);
+  trace(`[DEBUG] File watcher triggered with ${params.changes.length} changes`);
 
   let shouldRevalidate = false;
 
@@ -1374,8 +1418,8 @@ connection.onDidChangeWatchedFiles((params) => {
       fsPath = fsPath.substring(1);
     }
 
-    // trace(`[DEBUG] Processing config file change: ${fsPath}`);
-    // trace(`[DEBUG] Change type: ${params.changes[i].type}`);
+    trace(`[DEBUG] Processing config file change: ${fsPath}`);
+    trace(`[DEBUG] Change type: ${params.changes[i].type}`);
 
     // Only process .htmlhintrc files
     if (fsPath.endsWith(".htmlhintrc") || fsPath.endsWith(".htmlhintrc.json")) {
@@ -1388,13 +1432,13 @@ connection.onDidChangeWatchedFiles((params) => {
       const dir = path.dirname(fsPath);
       Object.keys(htmlhintrcOptions).forEach((configPath) => {
         if (configPath.startsWith(dir)) {
-          // trace(`[DEBUG] Clearing cached config: ${configPath}`);
+          trace(`[DEBUG] Clearing cached config: ${configPath}`);
           htmlhintrcOptions[configPath] = undefined;
         }
       });
 
       // Clear all cached configs to be safe
-      // trace(`[DEBUG] Clearing all cached configs for safety`);
+      trace(`[DEBUG] Clearing all cached configs for safety`);
       Object.keys(htmlhintrcOptions).forEach((configPath) => {
         htmlhintrcOptions[configPath] = undefined;
       });
@@ -1402,11 +1446,11 @@ connection.onDidChangeWatchedFiles((params) => {
   }
 
   if (shouldRevalidate) {
-    // trace(`[DEBUG] Triggering revalidation of all documents`);
+    trace(`[DEBUG] Triggering revalidation of all documents`);
     // Force revalidation of all documents
     validateAllTextDocuments(connection, documents.all());
   } else {
-    // trace(`[DEBUG] No .htmlhintrc files changed, skipping revalidation`);
+    trace(`[DEBUG] No .htmlhintrc files changed, skipping revalidation`);
   }
 });
 
