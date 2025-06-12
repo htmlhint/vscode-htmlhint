@@ -483,7 +483,7 @@ function createAttrValueDoubleQuotesFix(
 /**
  * Create auto-fix action for tagname-lowercase rule
  */
-function createTagnameLowearcaseFix(
+function createTagnameLowercaseFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
@@ -1220,7 +1220,7 @@ function createAutoFixes(
         fix = createAttrValueDoubleQuotesFix(document, diagnostic);
         break;
       case "tagname-lowercase":
-        fix = createTagnameLowearcaseFix(document, diagnostic);
+        fix = createTagnameLowercaseFix(document, diagnostic);
         break;
       case "attr-lowercase":
         fix = createAttrLowercaseFix(document, diagnostic);
