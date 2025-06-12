@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Test case 1: Basic head with charset - description should be added after charset -->
+    <meta charset="UTF-8">
+    <title>Meta Description Test</title>
+</head>
+<body>
+    <h1>Test Page 1</h1>
+    <p>This page is missing a meta description tag.</p>
+</body>
+</html>
+
+<!-- Test case 2: Head with charset and viewport - description should be added after viewport -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Description Test 2</title>
+</head>
+<body>
+    <h1>Test Page 2</h1>
+    <p>This page also needs a meta description tag.</p>
+</body>
+</html>
+
+<!-- Test case 3: Basic head without charset or viewport - description should be added at beginning -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Meta Description Test 3</title>
+</head>
+<body>
+    <h1>Test Page 3</h1>
+    <p>This page needs a meta description tag at the beginning of head.</p>
+</body>
+</html>
+
+<!-- Test case 4: Already has description tag - should not trigger autofix -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="This page already has a description">
+    <title>Meta Description Test 4</title>
+</head>
+<body>
+    <h1>Test Page 4</h1>
+    <p>This page already has a meta description tag.</p>
+</body>
+</html>
