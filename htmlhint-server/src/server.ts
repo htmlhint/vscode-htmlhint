@@ -216,23 +216,31 @@ function findConfigForHtmlFile(base: string) {
     }
 
     while (base && base.length > 0) {
-      let tmpConfigFile = path.resolve(base + path.sep, ".htmlhintrc");
-      trace(`[HTMLHint Debug] Checking config path: ${tmpConfigFile}`);
+      // Check for both .htmlhintrc and .htmlhintrc.json files
+      const configFiles = [
+        path.resolve(base, ".htmlhintrc"),
+        path.resolve(base, ".htmlhintrc.json"),
+      ];
 
-      // undefined means we haven't tried to load the config file at this path, so try to load it.
-      if (htmlhintrcOptions[tmpConfigFile] === undefined) {
-        htmlhintrcOptions[tmpConfigFile] = loadConfigurationFile(tmpConfigFile);
-      }
+      for (const tmpConfigFile of configFiles) {
+        trace(`[HTMLHint Debug] Checking config path: ${tmpConfigFile}`);
 
-      // defined, non-null value means we found a config file at the given path, so use it.
-      if (htmlhintrcOptions[tmpConfigFile]) {
-        options = htmlhintrcOptions[tmpConfigFile];
-        trace(`[HTMLHint Debug] Using config from: ${tmpConfigFile}`);
-        break;
+        // undefined means we haven't tried to load the config file at this path, so try to load it.
+        if (htmlhintrcOptions[tmpConfigFile] === undefined) {
+          htmlhintrcOptions[tmpConfigFile] =
+            loadConfigurationFile(tmpConfigFile);
+        }
+
+        // defined, non-null value means we found a config file at the given path, so use it.
+        if (htmlhintrcOptions[tmpConfigFile]) {
+          options = htmlhintrcOptions[tmpConfigFile];
+          trace(`[HTMLHint Debug] Using config from: ${tmpConfigFile}`);
+          return options;
+        }
       }
 
       // Move to parent directory
-      let parentBase = base.substring(0, base.lastIndexOf(path.sep));
+      let parentBase = path.dirname(base);
       if (parentBase === base) {
         // Reached root directory, stop searching
         break;
