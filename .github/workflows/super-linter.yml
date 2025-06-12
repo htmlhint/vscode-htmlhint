@@ -31,6 +31,7 @@ jobs:
           IGNORE_GITIGNORED_FILES: true
           LINTER_RULES_PATH: /
           LOG_LEVEL: NOTICE
+          MARKDOWN_CONFIG_FILE: .markdownlint.json
           SUPPRESS_POSSUM: true
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_EDITORCONFIG: false
