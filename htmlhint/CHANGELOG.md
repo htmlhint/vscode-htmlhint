@@ -2,9 +2,11 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
-### v1.6.3 (2025-06-13)
+### v1.7.0 (2025-06-13)
 
 - Add autofix for `meta-description-require`
+- Improve HTMLHint config loading
+- Enable Debug Logging (check the Output > HTMLHint channel in VS Code)
 
 ### v1.6.2 (2025-06-12)
 

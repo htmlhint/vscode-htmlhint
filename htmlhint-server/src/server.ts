@@ -135,6 +135,10 @@ function makeDiagnostic(problem: htmlhint.Error, lines: string[]): Diagnostic {
  */
 function getConfiguration(filePath: string): any {
   let options: any;
+
+  trace(`[HTMLHint Debug] Getting configuration for file: ${filePath}`);
+  trace(`[HTMLHint Debug] Current settings: ${JSON.stringify(settings)}`);
+
   if (settings?.htmlhint) {
     if (
       settings.htmlhint.configFile &&
@@ -148,6 +152,9 @@ function getConfiguration(filePath: string): any {
     if (settings.htmlhint.configFile) {
       if (fs.existsSync(settings.htmlhint.configFile)) {
         options = loadConfigurationFile(settings.htmlhint.configFile);
+        trace(
+          `[HTMLHint Debug] Using configFile setting: ${settings.htmlhint.configFile}`,
+        );
       } else {
         const configFileHint = !path.isAbsolute(settings.htmlhint.configFile)
           ? ` (resolves to '${path.resolve(settings.htmlhint.configFile)}')`
@@ -161,16 +168,35 @@ function getConfiguration(filePath: string): any {
       Object.keys(settings.htmlhint.options).length > 0
     ) {
       options = settings.htmlhint.options;
+      trace(
+        `[HTMLHint Debug] Using options setting: ${JSON.stringify(settings.htmlhint.options)}`,
+      );
     } else if (settings.htmlhint && settings.htmlhint.optionsFile) {
-      options = loadConfigurationFile(settings.htmlhint.optionsFile);
+      if (fs.existsSync(settings.htmlhint.optionsFile)) {
+        options = loadConfigurationFile(settings.htmlhint.optionsFile);
+        trace(
+          `[HTMLHint Debug] Using optionsFile setting: ${settings.htmlhint.optionsFile}`,
+        );
+      } else {
+        trace(
+          `[HTMLHint Debug] optionsFile does not exist: ${settings.htmlhint.optionsFile}, falling back to file search`,
+        );
+        options = findConfigForHtmlFile(filePath);
+      }
     } else {
+      trace(
+        `[HTMLHint Debug] No explicit config specified, searching for .htmlhintrc`,
+      );
       options = findConfigForHtmlFile(filePath);
     }
   } else {
+    trace(`[HTMLHint Debug] No settings available, searching for .htmlhintrc`);
     options = findConfigForHtmlFile(filePath);
   }
 
+  // Ensure we return an object (empty object if no config found)
   options = options || {};
+  trace(`[HTMLHint Debug] Final configuration: ${JSON.stringify(options)}`);
   return options;
 }
 
@@ -180,18 +206,18 @@ function getConfiguration(filePath: string): any {
  */
 function findConfigForHtmlFile(base: string) {
   let options: any;
-  // trace(`[HTMLHint Debug] Looking for config starting from: ${base}`);
+  trace(`[HTMLHint Debug] Looking for config starting from: ${base}`);
 
   if (fs.existsSync(base)) {
     // find default config file in parent directory
     if (fs.statSync(base).isDirectory() === false) {
       base = path.dirname(base);
-      // trace(`[HTMLHint Debug] File path detected, using directory: ${base}`);
+      trace(`[HTMLHint Debug] File path detected, using directory: ${base}`);
     }
 
-    while (base) {
+    while (base && base.length > 0) {
       let tmpConfigFile = path.resolve(base + path.sep, ".htmlhintrc");
-      // trace(`[HTMLHint Debug] Checking config path: ${tmpConfigFile}`);
+      trace(`[HTMLHint Debug] Checking config path: ${tmpConfigFile}`);
 
       // undefined means we haven't tried to load the config file at this path, so try to load it.
       if (htmlhintrcOptions[tmpConfigFile] === undefined) {
@@ -201,13 +227,26 @@ function findConfigForHtmlFile(base: string) {
       // defined, non-null value means we found a config file at the given path, so use it.
       if (htmlhintrcOptions[tmpConfigFile]) {
         options = htmlhintrcOptions[tmpConfigFile];
-        // trace(`[HTMLHint Debug] Using config from: ${tmpConfigFile}`);
+        trace(`[HTMLHint Debug] Using config from: ${tmpConfigFile}`);
         break;
       }
 
-      base = base.substring(0, base.lastIndexOf(path.sep));
+      // Move to parent directory
+      let parentBase = base.substring(0, base.lastIndexOf(path.sep));
+      if (parentBase === base) {
+        // Reached root directory, stop searching
+        break;
+      }
+      base = parentBase;
     }
+  } else {
+    trace(`[HTMLHint Debug] Base path does not exist: ${base}`);
   }
+
+  if (!options) {
+    trace(`[HTMLHint Debug] No config file found, using default rules`);
+  }
+
   return options;
 }
 
@@ -216,20 +255,22 @@ function findConfigForHtmlFile(base: string) {
  */
 function loadConfigurationFile(configFile: string): any {
   let ruleset: any = null;
-  // trace(`[HTMLHint Debug] Attempting to load config file: ${configFile}`);
+  trace(`[HTMLHint Debug] Attempting to load config file: ${configFile}`);
   if (fs.existsSync(configFile)) {
-    // trace(`[HTMLHint Debug] Config file exists, reading: ${configFile}`);
-    let config = fs.readFileSync(configFile, "utf8");
+    trace(`[HTMLHint Debug] Config file exists, reading: ${configFile}`);
     try {
+      let config = fs.readFileSync(configFile, "utf8");
       ruleset = JSON.parse(stripJsonComments(config));
-      // trace(
-      //   `[HTMLHint Debug] Successfully parsed config: ${JSON.stringify(ruleset)}`,
-      // );
+      trace(
+        `[HTMLHint Debug] Successfully parsed config: ${JSON.stringify(ruleset)}`,
+      );
     } catch (e) {
-      // trace(`[HTMLHint Debug] Failed to parse config file: ${e}`);
+      trace(`[HTMLHint Debug] Failed to parse config file: ${e}`);
+      // Return null so the cache doesn't store a broken config
+      ruleset = null;
     }
   } else {
-    // trace(`[HTMLHint Debug] Config file does not exist: ${configFile}`);
+    trace(`[HTMLHint Debug] Config file does not exist: ${configFile}`);
   }
   return ruleset;
 }
@@ -255,18 +296,28 @@ function validateAllTextDocuments(
   connection: Connection,
   documents: TextDocument[],
 ): void {
-  // trace(`[DEBUG] validateAllTextDocuments called for ${documents.length} documents`);
+  trace(
+    `[DEBUG] validateAllTextDocuments called for ${documents.length} documents`,
+  );
+
+  if (!settings) {
+    trace(
+      `[DEBUG] Settings not loaded yet, skipping validation of all documents`,
+    );
+    return;
+  }
+
   let tracker = new ErrorMessageTracker();
   documents.forEach((document) => {
     try {
-      // trace(`[DEBUG] Revalidating document: ${document.uri}`);
+      trace(`[DEBUG] Revalidating document: ${document.uri}`);
       validateTextDocument(connection, document);
     } catch (err) {
       tracker.add(getErrorMessage(err, document));
     }
   });
   tracker.sendErrors(connection);
-  // trace(`[DEBUG] validateAllTextDocuments completed`);
+  trace(`[DEBUG] validateAllTextDocuments completed`);
 }
 
 function validateTextDocument(
@@ -1395,18 +1446,32 @@ connection.onInitialized(() => {
       trace("[DEBUG] Initial configuration loaded");
       settings = { htmlhint: config };
 
-      // Validate all open documents with the initial configuration
+      // Only validate documents after configuration is loaded
       validateAllTextDocuments(connection, documents.all());
     })
     .catch((error) => {
       trace("[DEBUG] Failed to load initial configuration: " + error);
-      // Validate with default configuration
+      // Set default settings and validate with default configuration
+      settings = {
+        htmlhint: {
+          enable: true,
+          options: {},
+          configFile: "",
+          optionsFile: "",
+        },
+      };
       validateAllTextDocuments(connection, documents.all());
     });
 });
 
 function doValidate(connection: Connection, document: TextDocument): void {
   try {
+    // Check if configuration has been loaded yet
+    if (!settings) {
+      trace("[DEBUG] Configuration not yet loaded, skipping validation");
+      return;
+    }
+
     let uri = document.uri;
     // Convert URI to file path manually since Files API is not available
     let fsPath = uri.replace(/^file:\/\//, "");
@@ -1416,29 +1481,29 @@ function doValidate(connection: Connection, document: TextDocument): void {
       fsPath = fsPath.substring(1);
     }
 
-    // trace(`[DEBUG] doValidate called for: ${fsPath}`);
+    trace(`[DEBUG] doValidate called for: ${fsPath}`);
 
     let contents = document.getText();
     let lines = contents.split("\n");
 
     let config = getConfiguration(fsPath);
-    // trace(`[DEBUG] Loaded config: ${JSON.stringify(config)}`);
+    trace(`[DEBUG] Loaded config: ${JSON.stringify(config)}`);
 
     let errors: htmlhint.Error[] = linter.verify(contents, config);
-    // trace(`[DEBUG] HTMLHint found ${errors.length} errors`);
+    trace(`[DEBUG] HTMLHint found ${errors.length} errors`);
 
     let diagnostics: Diagnostic[] = [];
     if (errors.length > 0) {
       errors.forEach((each) => {
-        // trace(`[DEBUG] Error found: ${each.rule.id} - ${each.message}`);
+        trace(`[DEBUG] Error found: ${each.rule.id} - ${each.message}`);
         diagnostics.push(makeDiagnostic(each, lines));
       });
     }
 
-    // trace(`[DEBUG] Sending ${diagnostics.length} diagnostics to VS Code`);
+    trace(`[DEBUG] Sending ${diagnostics.length} diagnostics to VS Code`);
     connection.sendDiagnostics({ uri, diagnostics });
   } catch (err) {
-    // trace(`[DEBUG] doValidate error: ${err}`);
+    trace(`[DEBUG] doValidate error: ${err}`);
     if (isErrorWithMessage(err)) {
       throw new Error(err.message);
     }
@@ -1449,12 +1514,20 @@ function doValidate(connection: Connection, document: TextDocument): void {
 // A text document has changed. Validate the document.
 documents.onDidChangeContent((event) => {
   // the contents of a text document has changed
+  trace(`[DEBUG] Document content changed: ${event.document.uri}`);
+  validateTextDocument(connection, event.document);
+});
+
+// A text document has been opened. Validate the document.
+documents.onDidOpen((event) => {
+  trace(`[DEBUG] Document opened: ${event.document.uri}`);
   validateTextDocument(connection, event.document);
 });
 
 // Send an empty array of diagnostics to stop displaying them on a closed file
 connection.onDidCloseTextDocument((event) => {
   const uri = event.textDocument.uri;
+  trace(`[DEBUG] Document closed: ${uri}`);
   connection.sendDiagnostics({ uri, diagnostics: [] });
 });
 
