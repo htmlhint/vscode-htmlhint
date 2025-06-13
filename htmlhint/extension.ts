@@ -1,15 +1,16 @@
 import * as path from "path";
-import { workspace, ExtensionContext } from "vscode";
+import * as vscode from "vscode";
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
   TransportKind,
+  Diagnostic as LSPDiagnostic,
 } from "vscode-languageclient/node";
 
 let client: LanguageClient;
 
-export async function activate(_context: ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
   // We need to go one level up since an extension compile the js code into
   // the output folder.
   let serverModulePath = path.join(__dirname, "..", "server", "server.js");
@@ -27,7 +28,7 @@ export async function activate(_context: ExtensionContext) {
   };
 
   // Get file types to lint from user settings
-  let config = workspace.getConfiguration("htmlhint");
+  let config = vscode.workspace.getConfiguration("htmlhint");
   let languages: string[] = config.get("documentSelector") || ["html", "htm"];
   let documentSelector = languages.map((language) => ({
     language,
@@ -41,9 +42,33 @@ export async function activate(_context: ExtensionContext) {
     synchronize: {
       configurationSection: "htmlhint",
       fileEvents: [
-        workspace.createFileSystemWatcher("**/.htmlhintrc"),
-        workspace.createFileSystemWatcher("**/.htmlhintrc.json"),
+        vscode.workspace.createFileSystemWatcher("**/.htmlhintrc"),
+        vscode.workspace.createFileSystemWatcher("**/.htmlhintrc.json"),
       ],
+    },
+    middleware: {
+      handleDiagnostics: (uri, diagnostics, next) => {
+        const enhancedDiagnostics = diagnostics.map((diagnostic) => {
+          const lspDiagnostic = diagnostic as unknown as LSPDiagnostic;
+          if (lspDiagnostic.data?.href) {
+            const vscodeDiagnostic = new vscode.Diagnostic(
+              diagnostic.range,
+              diagnostic.message,
+              diagnostic.severity,
+            );
+            if (diagnostic.source) {
+              vscodeDiagnostic.source = diagnostic.source;
+            }
+            vscodeDiagnostic.code = {
+              value: diagnostic.code as string,
+              target: vscode.Uri.parse(lspDiagnostic.data.href),
+            };
+            return vscodeDiagnostic;
+          }
+          return diagnostic;
+        });
+        return next(uri, enhancedDiagnostics);
+      },
     },
   };
 
@@ -56,7 +81,8 @@ export async function activate(_context: ExtensionContext) {
   );
 
   // Start the client
-  await client.start();
+  client.start();
+  context.subscriptions.push(client);
 }
 
 export async function deactivate(): Promise<void> {
