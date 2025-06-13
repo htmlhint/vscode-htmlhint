@@ -3,7 +3,7 @@
   "displayName": "HTMLHint",
   "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
   "icon": "images/icon.png",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "publisher": "HTMLHint",
   "galleryBanner": {
     "color": "#333333",
@@ -34,6 +34,12 @@
   ],
   "main": "./out/extension",
   "contributes": {
+    "commands": [
+      {
+        "command": "htmlhint.createConfig",
+        "title": "HTMLHINT: Create a .htmlhintrc config"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "HTMLHint",
