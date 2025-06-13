@@ -41,6 +41,7 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as htmlhint from "htmlhint";
 import fs = require("fs");
+import { URI } from "vscode-uri";
 let stripJsonComments: any = require("strip-json-comments");
 
 interface Settings {
@@ -1481,13 +1482,8 @@ function doValidate(connection: Connection, document: TextDocument): void {
     }
 
     let uri = document.uri;
-    // Convert URI to file path manually since Files API is not available
-    let fsPath = uri.replace(/^file:\/\//, "");
-    // Decode URL encoding (e.g., %3A -> :)
-    fsPath = decodeURIComponent(fsPath);
-    if (process.platform === "win32" && fsPath.startsWith("/")) {
-      fsPath = fsPath.substring(1);
-    }
+    // Convert URI to file path using vscode-uri
+    let fsPath = URI.parse(uri).fsPath;
 
     trace(`[DEBUG] doValidate called for: ${fsPath}`);
 
@@ -1578,14 +1574,9 @@ connection.onDidChangeWatchedFiles((params) => {
   let shouldRevalidate = false;
 
   for (let i = 0; i < params.changes.length; i++) {
-    // Convert URI to file path manually since Files API is not available
+    // Convert URI to file path using vscode-uri
     let uri = params.changes[i].uri;
-    let fsPath = uri.replace(/^file:\/\//, "");
-    // Decode URL encoding (e.g., %3A -> :)
-    fsPath = decodeURIComponent(fsPath);
-    if (process.platform === "win32" && fsPath.startsWith("/")) {
-      fsPath = fsPath.substring(1);
-    }
+    let fsPath = URI.parse(uri).fsPath;
 
     trace(`[DEBUG] Processing config file change: ${fsPath}`);
     trace(`[DEBUG] Change type: ${params.changes[i].type}`);
