@@ -9,12 +9,6 @@ updates:
 
   - package-ecosystem: npm
     directory: "/"
-    groups:
-      all-dependencies:
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
     schedule:
       interval: weekly
     versioning-strategy: increase
@@ -22,12 +16,6 @@ updates:
 
   - package-ecosystem: npm
     directory: "/htmlhint"
-    groups:
-      all-dependencies:
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
     schedule:
       interval: weekly
     versioning-strategy: increase
@@ -35,12 +23,6 @@ updates:
 
   - package-ecosystem: npm
     directory: "/htmlhint-server"
-    groups:
-      all-dependencies:
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
     schedule:
       interval: weekly
     versioning-strategy: increase

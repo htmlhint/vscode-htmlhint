@@ -2,6 +2,10 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.8.0 (2025-06-13)
+
+- Issue IDs in problems now link to the HTMLHint rule documentation
+
 ### v1.7.0 (2025-06-13)
 
 - Add autofix for `meta-description-require`

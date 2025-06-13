@@ -37,6 +37,7 @@ import {
   CodeActionKind,
   TextEdit,
   WorkspaceEdit,
+  CodeDescription,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as htmlhint from "htmlhint";
@@ -115,17 +116,23 @@ function getRange(error: htmlhint.Error, lines: string[]): any {
 /**
  * Given an htmlhint.Error type return a VS Code server Diagnostic object
  */
-function makeDiagnostic(problem: htmlhint.Error, lines: string[]): Diagnostic {
+function makeDiagnostic(
+  problem: htmlhint.Error,
+  document: TextDocument,
+): Diagnostic {
+  const range = {
+    start: document.positionAt(problem.line - 1),
+    end: document.positionAt(problem.line - 1),
+  };
+
   return {
-    severity: DiagnosticSeverity.Warning,
+    range,
     message: problem.message,
-    range: getRange(problem, lines),
-    code: problem.rule.id,
+    severity: DiagnosticSeverity.Warning,
     source: "htmlhint",
+    code: problem.rule.id,
     data: {
-      ruleId: problem.rule.id,
-      line: problem.line,
-      col: problem.col,
+      href: `https://htmlhint.com/rules/${problem.rule.id}/`,
     },
   };
 }
@@ -1500,7 +1507,7 @@ function doValidate(connection: Connection, document: TextDocument): void {
     if (errors.length > 0) {
       errors.forEach((each) => {
         trace(`[DEBUG] Error found: ${each.rule.id} - ${each.message}`);
-        diagnostics.push(makeDiagnostic(each, lines));
+        diagnostics.push(makeDiagnostic(each, document));
       });
     }
 
