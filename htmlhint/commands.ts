@@ -33,23 +33,32 @@ export async function createHtmlHintConfig() {
     const workspaceRoot = firstWorkspaceFolder.uri.fsPath;
     const configPath = path.join(workspaceRoot, ".htmlhintrc");
 
-    // Check if config already exists
-    if (fs.existsSync(configPath)) {
-      const overwrite = await vscode.window.showWarningMessage(
-        ".htmlhintrc already exists. Do you want to overwrite it?",
-        "Yes",
-        "No",
+    try {
+      // Try to create the file atomically
+      fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2), {
+        flag: "wx",
+      });
+      vscode.window.showInformationMessage(
+        ".htmlhintrc configuration file created successfully",
       );
-      if (overwrite !== "Yes") {
-        return;
+    } catch (error) {
+      // If file exists, ask for overwrite
+      if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+        const overwrite = await vscode.window.showWarningMessage(
+          ".htmlhintrc already exists. Do you want to overwrite it?",
+          "Yes",
+          "No",
+        );
+        if (overwrite === "Yes") {
+          fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
+          vscode.window.showInformationMessage(
+            ".htmlhintrc configuration file updated successfully",
+          );
+        }
+      } else {
+        throw error;
       }
     }
-
-    // Write the config file
-    fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
-    vscode.window.showInformationMessage(
-      ".htmlhintrc configuration file created successfully",
-    );
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to create .htmlhintrc: ${error}`);
   }
