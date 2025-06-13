@@ -121,7 +121,6 @@ function makeDiagnostic(
   document: TextDocument,
 ): Diagnostic {
   const lines = document.getText().split("\n");
-  const line = lines[problem.line - 1];
   const col = problem.col - 1;
   const endCol = problem.col + (problem.raw?.length || 0) - 1;
 
