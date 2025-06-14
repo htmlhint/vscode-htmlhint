@@ -15,7 +15,7 @@ let outputChannel: vscode.OutputChannel;
 
 export function activate(context: vscode.ExtensionContext) {
   // Create output channel for logging
-  outputChannel = vscode.window.createOutputChannel("HTML-hint");
+  outputChannel = vscode.window.createOutputChannel("HTMLHint");
   context.subscriptions.push(outputChannel);
 
   // Register the create config command
@@ -90,8 +90,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Create the language client and start it
   client = new LanguageClient(
-    "HTML-hint",
-    "HTML-hint",
+    "HTMLHint",
+    "HTMLHint",
     serverOptions,
     clientOptions,
   );
