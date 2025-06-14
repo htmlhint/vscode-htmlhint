@@ -12,6 +12,7 @@
     "nvmrc",
     "ruleset",
     "tagname",
+    "vite",
     "VSIX"
   ],
   "flagWords": [
