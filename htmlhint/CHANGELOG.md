@@ -2,6 +2,11 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.9.1 (2025-06-16)
+
+- Many under the hood improvements for performance and stability
+- Minor optimizations and code cleanup
+
 ### v1.9.0 (2025-06-13)
 
 - Add command to create a `.htmlhintrc` config file

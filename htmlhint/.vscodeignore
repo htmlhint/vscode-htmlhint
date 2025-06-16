@@ -4,6 +4,7 @@
 **/examples/**
 **/test/**
 **/tests/**
+**/.cspell.json
 **/.DS_Store
 **/.editorconfig
 **/.eslintignore
@@ -15,6 +16,8 @@
 **/.gitkeep
 **/.history/**
 **/.idea/**
+**/.jscpd.json
+**/.lycheeignore
 **/.npmignore
 **/.npmrc
 **/.nvmrc
@@ -58,10 +61,14 @@ images/status-bar.png
 **/node_modules/**/.npmignore
 **/node_modules/**/.eslintrc*
 **/node_modules/**/webpack.config.js
+**/node_modules/**/renovate.json
 **/node_modules/**/rollup.config.js
 **/node_modules/**/jest.config.js
 **/node_modules/**/babel.config.js
 **/node_modules/**/vite.config.js
+**/node_modules/**/.vscode/**
+**/node_modules/**/browser/**
+**/node_modules/**/esm/**
 **/node_modules/**/example/**
 **/node_modules/**/examples/**
 **/node_modules/**/docs/**
