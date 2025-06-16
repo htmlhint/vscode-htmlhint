@@ -9,3 +9,4 @@ node_modules
 # TypeScript build info files
 .tsbuildinfo
 */.tsbuildinfo
+/.vscode-test
