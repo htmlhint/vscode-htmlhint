@@ -10,6 +10,7 @@
     "htmlhintrc",
     "mylang",
     "nvmrc",
+    "rollup",
     "ruleset",
     "tagname",
     "vite",
