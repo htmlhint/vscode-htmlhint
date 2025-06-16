@@ -22,8 +22,8 @@
     "postinstall": "cd htmlhint && npm i && cd ../htmlhint-server && npm i",
     "compile": "cd htmlhint-server && npm run compile && cd ../htmlhint && npm run compile",
     "compile:tests": "tsc -p ./test",
-    "pretest": "npm run prettier && npm run lint && npm run compile && npm run compile:tests",
-    "test": "node ./test/out/runTest.js",
+    "test": "npm run prettier && npm run lint && npm run compile && npm run compile:tests",
+    "test-local": "node ./test/out/runTest.js",
     "package": "cd htmlhint && npm run vscode:prepublish && vsce package"
   },
   "dependencies": {
