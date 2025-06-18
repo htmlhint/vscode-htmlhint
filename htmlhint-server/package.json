@@ -8,7 +8,7 @@
     "watch": "tsc --watch -p ./src"
   },
   "dependencies": {
-    "htmlhint": "^1.5.1",
+    "htmlhint": "^1.6.2",
     "strip-json-comments": "3.1.1",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12",
