@@ -1268,6 +1268,98 @@ function createAttrNoUnnecessaryWhitespaceFix(
 }
 
 /**
+ * Create auto-fix action for spec-char-escape rule
+ */
+function createSpecCharEscapeFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  if (
+    !diagnostic.data ||
+    diagnostic.data.ruleId !== "spec-char-escape" ||
+    typeof diagnostic.data.line !== "number" ||
+    typeof diagnostic.data.col !== "number"
+  ) {
+    return null;
+  }
+
+  const text = document.getText();
+  const lines = text.split("\n");
+  const line = lines[diagnostic.data.line - 1];
+
+  if (!line) {
+    return null;
+  }
+
+  // Find unescaped special characters that need to be escaped
+  // We need to be careful not to escape characters that are already in HTML tags or attributes
+  const specialCharPattern = /([<>])/g;
+  let match;
+  const edits: TextEdit[] = [];
+
+  while ((match = specialCharPattern.exec(line)) !== null) {
+    const startCol = match.index;
+    const endCol = startCol + match[1].length;
+    const char = match[1];
+
+    // Check if this match is at or near the diagnostic position
+    const diagnosticCol = diagnostic.data.col - 1;
+    if (Math.abs(startCol - diagnosticCol) <= 5) {
+      // Determine if this character is inside a tag (should not be escaped)
+      const beforeMatch = line.substring(0, startCol);
+      const lastOpenBracket = beforeMatch.lastIndexOf("<");
+      const lastCloseBracket = beforeMatch.lastIndexOf(">");
+
+      // If we're inside a tag (after < but before >), don't escape
+      if (lastOpenBracket > lastCloseBracket) {
+        continue;
+      }
+
+      const lineStartPos = document.positionAt(
+        text
+          .split("\n")
+          .slice(0, diagnostic.data.line - 1)
+          .join("\n").length + (diagnostic.data.line > 1 ? 1 : 0),
+      );
+      const startPos = { line: lineStartPos.line, character: startCol };
+      const endPos = { line: lineStartPos.line, character: endCol };
+
+      // Map characters to their HTML entities
+      const entityMap: { [key: string]: string } = {
+        "<": "&lt;",
+        ">": "&gt;",
+      };
+
+      const replacement = entityMap[char];
+      if (replacement) {
+        edits.push({
+          range: { start: startPos, end: endPos },
+          newText: replacement,
+        });
+        break; // Only fix the first occurrence near the diagnostic
+      }
+    }
+  }
+
+  if (edits.length === 0) {
+    return null;
+  }
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: edits,
+    },
+  };
+
+  return {
+    title: "Escape special character",
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true,
+  };
+}
+
+/**
  * Create auto-fix actions for supported rules
  */
 async function createAutoFixes(
@@ -1344,6 +1436,10 @@ async function createAutoFixes(
         case "attr-no-unnecessary-whitespace":
           trace(`[DEBUG] Calling createAttrNoUnnecessaryWhitespaceFix`);
           fix = createAttrNoUnnecessaryWhitespaceFix(document, diagnostic);
+          break;
+        case "spec-char-escape":
+          trace(`[DEBUG] Calling createSpecCharEscapeFix`);
+          fix = createSpecCharEscapeFix(document, diagnostic);
           break;
         default:
           trace(`[DEBUG] No autofix function found for rule: ${ruleId}`);
