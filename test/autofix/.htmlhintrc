@@ -15,7 +15,7 @@
   "spec-char-escape": true,
   "src-not-empty": true,
   "tag-pair": true,
-  "tag-self-close": false,
+  "tag-self-close": true,
   "tagname-lowercase": true,
   "title-require": true
 }
