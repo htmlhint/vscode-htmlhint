@@ -538,14 +538,9 @@ function createAttrValueDoubleQuotesFix(
     // Check if this match is at or near the diagnostic position
     const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 10) {
-      const lineStartPos = document.positionAt(
-        text
-          .split("\n")
-          .slice(0, diagnostic.data.line - 1)
-          .join("\n").length + (diagnostic.data.line > 1 ? 1 : 0),
-      );
-      const startPos = { line: lineStartPos.line, character: startCol };
-      const endPos = { line: lineStartPos.line, character: endCol };
+      const lineIndex = diagnostic.data.line - 1;
+      const startPos = { line: lineIndex, character: startCol };
+      const endPos = { line: lineIndex, character: endCol };
 
       edits.push({
         range: { start: startPos, end: endPos },
@@ -610,14 +605,9 @@ function createTagnameLowercaseFix(
     // Check if this match is at or near the diagnostic position
     const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(match.index - diagnosticCol) <= 5) {
-      const lineStartPos = document.positionAt(
-        text
-          .split("\n")
-          .slice(0, diagnostic.data.line - 1)
-          .join("\n").length + (diagnostic.data.line > 1 ? 1 : 0),
-      );
-      const startPos = { line: lineStartPos.line, character: startCol };
-      const endPos = { line: lineStartPos.line, character: endCol };
+      const lineIndex = diagnostic.data.line - 1;
+      const startPos = { line: lineIndex, character: startCol };
+      const endPos = { line: lineIndex, character: endCol };
 
       edits.push({
         range: { start: startPos, end: endPos },
@@ -682,14 +672,9 @@ function createAttrLowercaseFix(
     // Check if this match is at or near the diagnostic position
     const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 5) {
-      const lineStartPos = document.positionAt(
-        text
-          .split("\n")
-          .slice(0, diagnostic.data.line - 1)
-          .join("\n").length + (diagnostic.data.line > 1 ? 1 : 0),
-      );
-      const startPos = { line: lineStartPos.line, character: startCol };
-      const endPos = { line: lineStartPos.line, character: endCol };
+      const lineIndex = diagnostic.data.line - 1;
+      const startPos = { line: lineIndex, character: startCol };
+      const endPos = { line: lineIndex, character: endCol };
 
       edits.push({
         range: { start: startPos, end: endPos },
@@ -1315,14 +1300,9 @@ function createSpecCharEscapeFix(
         continue;
       }
 
-      const lineStartPos = document.positionAt(
-        text
-          .split("\n")
-          .slice(0, diagnostic.data.line - 1)
-          .join("\n").length + (diagnostic.data.line > 1 ? 1 : 0),
-      );
-      const startPos = { line: lineStartPos.line, character: startCol };
-      const endPos = { line: lineStartPos.line, character: endCol };
+      const lineIndex = diagnostic.data.line - 1;
+      const startPos = { line: lineIndex, character: startCol };
+      const endPos = { line: lineIndex, character: endCol };
 
       // Map characters to their HTML entities
       const entityMap: { [key: string]: string } = {
@@ -1357,6 +1337,133 @@ function createSpecCharEscapeFix(
     edit: workspaceEdit,
     isPreferred: true,
   };
+}
+
+/**
+ * Create auto-fix action for tag-self-close rule
+ *
+ * This fixes void HTML elements (like img, br, hr, input, etc.) that don't properly self-close.
+ * The fix converts tags ending with ">" to end with " />" to comply with self-closing tag standards.
+ *
+ * Example:
+ * - Before: <img src="image.jpg">
+ * - After:  <img src="image.jpg" />
+ */
+function createTagSelfCloseFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  trace(
+    `[DEBUG] createTagSelfCloseFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
+  );
+
+  if (!diagnostic.data || diagnostic.data.ruleId !== "tag-self-close") {
+    trace(
+      `[DEBUG] createTagSelfCloseFix: Invalid diagnostic data or ruleId: ${JSON.stringify(diagnostic.data)}`,
+    );
+    return null;
+  }
+
+  trace(
+    `[DEBUG] createTagSelfCloseFix: Valid diagnostic for tag-self-close rule`,
+  );
+  trace(`[DEBUG] Diagnostic range: ${JSON.stringify(diagnostic.range)}`);
+  trace(`[DEBUG] Diagnostic data: ${JSON.stringify(diagnostic.data)}`);
+
+  const text = document.getText();
+  const range = diagnostic.range;
+  const raw = diagnostic.data.raw; // Extract the tag with its attributes from the raw data
+  if (!raw) {
+    trace(`[DEBUG] createTagSelfCloseFix: No raw data found in diagnostic`);
+    return null;
+  }
+
+  trace(`[DEBUG] createTagSelfCloseFix: Raw data: ${raw}`);
+
+  // Get the position of the tag's closing '>'
+  const lineStart = document.offsetAt({ line: range.start.line, character: 0 });
+  const position = document.offsetAt(range.start);
+  const lineContent = text.substring(
+    lineStart,
+    text.indexOf("\n", position) !== -1
+      ? text.indexOf("\n", position)
+      : text.length,
+  );
+
+  trace(`[DEBUG] createTagSelfCloseFix: Line content: ${lineContent}`);
+
+  // Find the last character of the tag
+  let tagEndIndex;
+
+  // If raw data contains the complete tag
+  if (raw.endsWith(">")) {
+    tagEndIndex = document.offsetAt(range.start) + raw.length - 1;
+  } else {
+    // Try to find the closest '>' after the diagnostic position
+    const tagStart = document.offsetAt(range.start);
+    const lineText = text.substring(
+      tagStart,
+      text.indexOf("\n", tagStart) !== -1
+        ? text.indexOf("\n", tagStart)
+        : text.length,
+    );
+    const closeTagIndex = lineText.indexOf(">");
+
+    if (closeTagIndex !== -1) {
+      tagEndIndex = tagStart + closeTagIndex;
+    } else {
+      trace(
+        `[DEBUG] createTagSelfCloseFix: Could not find closing '>' for tag`,
+      );
+      return null;
+    }
+  }
+
+  if (text[tagEndIndex] !== ">") {
+    trace(
+      `[DEBUG] createTagSelfCloseFix: Unexpected tag ending: ${text[tagEndIndex]} at position ${tagEndIndex}`,
+    );
+    trace(
+      `[DEBUG] Text around position: ${text.substring(tagEndIndex - 10, tagEndIndex + 10)}`,
+    );
+    return null;
+  }
+
+  trace(
+    `[DEBUG] createTagSelfCloseFix: Found tag ending '>' at position ${tagEndIndex}`,
+  );
+
+  // Create TextEdit to replace '>' with ' />'
+  const edit: TextEdit = {
+    range: {
+      start: document.positionAt(tagEndIndex),
+      end: document.positionAt(tagEndIndex + 1),
+    },
+    newText: " />",
+  };
+
+  trace(
+    `[DEBUG] createTagSelfCloseFix: Created edit to replace '>' with ' />'`,
+  );
+
+  const action = CodeAction.create(
+    "Add self-closing tag",
+    {
+      changes: {
+        [document.uri]: [edit],
+      },
+    },
+    CodeActionKind.QuickFix,
+  );
+
+  action.diagnostics = [diagnostic];
+  action.isPreferred = true;
+
+  trace(
+    `[DEBUG] createTagSelfCloseFix: Created code action: ${JSON.stringify(action)}`,
+  );
+
+  return action;
 }
 
 /**
@@ -1440,6 +1547,10 @@ async function createAutoFixes(
         case "spec-char-escape":
           trace(`[DEBUG] Calling createSpecCharEscapeFix`);
           fix = createSpecCharEscapeFix(document, diagnostic);
+          break;
+        case "tag-self-close":
+          trace(`[DEBUG] Calling createTagSelfCloseFix`);
+          fix = createTagSelfCloseFix(document, diagnostic);
           break;
         default:
           trace(`[DEBUG] No autofix function found for rule: ${ruleId}`);
@@ -1701,12 +1812,40 @@ connection.onRequest(
         `[DEBUG] Context diagnostics: ${JSON.stringify(context.diagnostics)}`,
       );
 
+      // Normalize range if it's in array format [start, end]
+      const normalizedRange = Array.isArray(range)
+        ? { start: range[0], end: range[1] }
+        : range;
+
+      // Ensure range has proper structure
+      if (
+        !normalizedRange.start ||
+        !normalizedRange.end ||
+        typeof normalizedRange.start.line !== "number" ||
+        typeof normalizedRange.end.line !== "number"
+      ) {
+        trace(`[DEBUG] Invalid range format: ${JSON.stringify(range)}`);
+        return [];
+      }
+
       // Filter diagnostics to only include those that intersect with the range
       const filteredDiagnostics = context.diagnostics.filter((diagnostic) => {
+        // Ensure the diagnostic has a properly structured range
+        if (
+          !diagnostic.range ||
+          typeof diagnostic.range.start?.line !== "number" ||
+          typeof diagnostic.range.end?.line !== "number"
+        ) {
+          trace(
+            `[DEBUG] Skipping diagnostic with invalid range: ${JSON.stringify(diagnostic)}`,
+          );
+          return false;
+        }
+
         const diagnosticRange = diagnostic.range;
         return (
-          diagnosticRange.start.line <= range.end.line &&
-          diagnosticRange.end.line >= range.start.line
+          diagnosticRange.start.line <= normalizedRange.end.line &&
+          diagnosticRange.end.line >= normalizedRange.start.line
         );
       });
 
@@ -1736,7 +1875,15 @@ connection.onRequest(
             href: diagnostic.codeDescription?.href,
             line: diagnostic.range.start.line + 1,
             col: diagnostic.range.start.character + 1,
-            raw: diagnostic.message.split(" ")[0],
+            raw:
+              diagnostic.code === "tag-self-close"
+                ? document
+                    .getText()
+                    .substring(
+                      document.offsetAt(diagnostic.range.start),
+                      document.offsetAt(diagnostic.range.end),
+                    )
+                : diagnostic.message.split(" ")[0],
           },
         };
 
@@ -1752,21 +1899,27 @@ connection.onRequest(
             isPreferred: fix.isPreferred,
             edit: fix.edit
               ? {
-                  changes: {
-                    [uri]: fix.edit.changes[uri].map((change) => ({
-                      range: {
-                        start: {
-                          line: change.range.start.line,
-                          character: change.range.start.character,
-                        },
-                        end: {
-                          line: change.range.end.line,
-                          character: change.range.end.character,
-                        },
-                      },
-                      newText: change.newText,
-                    })),
-                  },
+                  changes: fix.edit.documentChanges
+                    ? {
+                        [uri]: (fix.edit.documentChanges[0] as any).edits || [],
+                      }
+                    : fix.edit.changes && fix.edit.changes[uri]
+                      ? {
+                          [uri]: fix.edit.changes[uri].map((change) => ({
+                            range: {
+                              start: {
+                                line: change.range.start.line,
+                                character: change.range.start.character,
+                              },
+                              end: {
+                                line: change.range.end.line,
+                                character: change.range.end.character,
+                              },
+                            },
+                            newText: change.newText,
+                          })),
+                        }
+                      : { [uri]: [] },
                 }
               : undefined,
           })),
