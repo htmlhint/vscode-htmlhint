@@ -30,6 +30,7 @@ The extension provides automatic fixes for many common HTML issues. Currently su
 - **`attr-lowercase`** - Converts uppercase attribute names to lowercase
 - **`attr-no-unnecessary-whitespace`** - Removes unnecessary whitespace around attributes
 - **`attr-value-double-quotes`** - Converts single quotes to double quotes in attributes
+- **`attr-whitespace`** - Removes leading and trailing whitespace from attribute values
 - **`button-type-require`** - Adds type attribute to buttons
 - **`doctype-first`** - Adds DOCTYPE declaration at the beginning
 - **`doctype-html5`** - Updates DOCTYPE to HTML5

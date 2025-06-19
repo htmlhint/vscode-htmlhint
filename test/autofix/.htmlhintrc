@@ -4,6 +4,7 @@
   "attr-no-unnecessary-whitespace": true,
   "attr-value-double-quotes": true,
   "attr-value-no-duplication": true,
+  "attr-whitespace": true,
   "button-type-require": true,
   "doctype-first": true,
   "doctype-html5": true,

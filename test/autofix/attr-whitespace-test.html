@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attribute Whitespace Test</title>
+  </head>
+  <body>
+    <!-- Test case 1: Leading space in attribute value (should become: <div title="a"></div>) -->
+    <div title=" a"></div>
+
+    <!-- Test case 2: Trailing space in attribute value (should become: <div title="a"></div>) -->
+    <div title="a "></div>
+
+    <!-- Test case 3: Both leading and trailing spaces (should become: <div title="a"></div>) -->
+    <div title=" a "></div>
+
+    <!-- Test case 4: Multiple spaces (should become: <div class="btn primary">Button</div>) -->
+    <div class=" btn primary ">Button</div>
+
+    <!-- Test case 5: No spaces - should not trigger -->
+    <div title="a"></div>
+
+    <!-- Test case 6: Single space in middle - should not trigger -->
+    <div class="btn primary">Button</div>
+
+    <!-- Test case 7: Mixed quotes (should become: <div data-test='value'></div>) -->
+    <div data-test=' value '></div>
+
+    <!-- Test case 8: Multiple attributes with spaces (should become: <div id="main" class="container">Content</div>) -->
+    <div id=" main " class=" container ">Content</div>
+
+    <!-- Test case 9: Hyphenated attribute name with spaces (should become: <div data-test-id="value">Test</div>) -->
+    <div data-test-id=" value ">Test</div>
+  </body>
+</html>
