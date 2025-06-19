@@ -15,7 +15,7 @@ let outputChannel: vscode.OutputChannel;
 
 export function activate(context: vscode.ExtensionContext) {
   // Create output channel for logging
-  outputChannel = vscode.window.createOutputChannel("HTMLHint");
+  outputChannel = vscode.window.createOutputChannel("HTMLHint Extension");
   context.subscriptions.push(outputChannel);
 
   // Register the create config command

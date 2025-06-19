@@ -2,6 +2,11 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.10.2 (2025-06-19)
+
+- Add autofix for `spec-char-escape` rule
+- Rename extension output channel to "HTMLHint Extension" for better debugging
+
 ### v1.10.1 (2025-06-19)
 
 - Update HTMLHint to v1.6.3

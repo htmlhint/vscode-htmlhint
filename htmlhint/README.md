@@ -6,7 +6,7 @@ Integrates the [HTMLHint](https://github.com/htmlhint/HTMLHint) static analysis 
 
 ## Configuration
 
-The HTMLHint extension will attempt to use the locally installed HTMLHint module (the project-specific module if present, or a globally installed HTMLHint module). If a locally installed HTMLHint isn't available, the extension will use the embedded version (current version 1.5.1).
+The HTMLHint extension will attempt to use the locally installed HTMLHint module (the project-specific module if present, or a globally installed HTMLHint module). If a locally installed HTMLHint isn't available, the extension will use the embedded version (current version 1.6.3).
 
 To install a version to the local project folder, run `npm install --save-dev htmlhint`. To install a global version on the current machine, run `npm install --global htmlhint`.
 
@@ -21,6 +21,25 @@ Errors in HTML files are highlighted with squiggles and you can hover over the s
 Many problems can now be fixed automatically by clicking on the lightbulb icon in problems panel or right-clicking on the error in the HTML file and selecting "Quick Fix".
 
 ![hover](https://github.com/htmlhint/vscode-htmlhint/raw/main/htmlhint/images/hover.png)
+
+### Auto-fix Support
+
+The extension provides automatic fixes for many common HTML issues. Currently supported auto-fixes include:
+
+- **`alt-require`** - Adds alt attribute to images
+- **`attr-lowercase`** - Converts uppercase attribute names to lowercase
+- **`attr-no-unnecessary-whitespace`** - Removes unnecessary whitespace around attributes
+- **`attr-value-double-quotes`** - Converts single quotes to double quotes in attributes
+- **`button-type-require`** - Adds type attribute to buttons
+- **`doctype-first`** - Adds DOCTYPE declaration at the beginning
+- **`doctype-html5`** - Updates DOCTYPE to HTML5
+- **`html-lang-require`** - Adds `lang` attribute to `<html>` tag
+- **`meta-charset-require`** - Adds charset meta tag
+- **`meta-description-require`** - Adds description meta tag
+- **`meta-viewport-require`** - Adds viewport meta tag
+- **`spec-char-escape`** - Escapes special characters (`<`, `>`)
+- **`tagname-lowercase`** - Converts uppercase tag names to lowercase
+- **`title-require`** - Adds `<title>` tag to document
 
 > **Note:** HTMLHint will only analyze open HTML files and does not search for HTML files in your project folder.
 
