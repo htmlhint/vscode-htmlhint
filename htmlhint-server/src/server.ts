@@ -43,7 +43,14 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import * as htmlhint from "htmlhint";
 import fs = require("fs");
 import { URI } from "vscode-uri";
+import ignore from "ignore";
 let stripJsonComments: any = require("strip-json-comments");
+
+// Cache for gitignore patterns to avoid repeatedly parsing .gitignore files
+let gitignoreCache: Map<string, any> = new Map();
+
+// Cache for workspace root detection to avoid repeated filesystem calls
+let workspaceRootCache: Map<string, string | null> = new Map();
 
 interface Settings {
   htmlhint: {
@@ -51,6 +58,7 @@ interface Settings {
     enable: boolean;
     options: any;
     optionsFile: string;
+    ignoreGitignore: boolean;
   };
   [key: string]: any;
 }
@@ -1665,6 +1673,8 @@ async function createAutoFixes(
   }
 
   trace(`[DEBUG] Returning ${actions.length} auto-fix actions`);
+  trace(`[DEBUG] Code actions: ${JSON.stringify(actions)}`);
+
   return actions;
 }
 
@@ -1723,6 +1733,7 @@ connection.onInitialized(() => {
           options: {},
           configFile: "",
           optionsFile: "",
+          ignoreGitignore: false,
         },
       };
       validateAllTextDocuments(connection, documents.all());
@@ -1742,6 +1753,20 @@ function doValidate(connection: Connection, document: TextDocument): void {
     let fsPath = URI.parse(uri).fsPath;
 
     trace(`[DEBUG] doValidate called for: ${fsPath}`);
+
+    // Check if file should be ignored based on .gitignore
+    if (settings.htmlhint.ignoreGitignore) {
+      // Find workspace root by looking for .git directory or .gitignore file
+      let workspaceRoot = findWorkspaceRoot(fsPath);
+      if (workspaceRoot && shouldIgnoreFile(fsPath, workspaceRoot)) {
+        trace(
+          `[DEBUG] File ${fsPath} is ignored by .gitignore, skipping validation`,
+        );
+        // Clear any existing diagnostics for this file
+        connection.sendDiagnostics({ uri, diagnostics: [] });
+        return;
+      }
+    }
 
     let contents = document.getText();
     let lines = contents.split("\n");
@@ -1807,6 +1832,12 @@ connection.onDidChangeConfiguration((params) => {
         htmlhintrcOptions[configPath] = undefined;
       });
 
+      // Clear gitignore cache when settings change
+      gitignoreCache.clear();
+
+      // Clear workspace root cache when settings change
+      workspaceRootCache.clear();
+
       trace(`[DEBUG] Triggering revalidation due to settings change`);
       validateAllTextDocuments(connection, documents.all());
     })
@@ -1818,6 +1849,8 @@ connection.onDidChangeConfiguration((params) => {
         Object.keys(htmlhintrcOptions).forEach((configPath) => {
           htmlhintrcOptions[configPath] = undefined;
         });
+        gitignoreCache.clear();
+        workspaceRootCache.clear();
         validateAllTextDocuments(connection, documents.all());
       }
     });
@@ -1837,7 +1870,7 @@ connection.onDidChangeWatchedFiles((params) => {
     trace(`[DEBUG] Processing config file change: ${fsPath}`);
     trace(`[DEBUG] Change type: ${params.changes[i].type}`);
 
-    // Only process .htmlhintrc files
+    // Process .htmlhintrc files
     if (fsPath.endsWith(".htmlhintrc") || fsPath.endsWith(".htmlhintrc.json")) {
       shouldRevalidate = true;
 
@@ -1859,6 +1892,18 @@ connection.onDidChangeWatchedFiles((params) => {
         htmlhintrcOptions[configPath] = undefined;
       });
     }
+
+    // Process .gitignore files
+    if (fsPath.endsWith(".gitignore")) {
+      shouldRevalidate = true;
+
+      // Clear gitignore cache when .gitignore changes
+      trace(`[DEBUG] .gitignore file changed, clearing cache`);
+      gitignoreCache.clear();
+
+      // Clear workspace root cache since it depends on .gitignore detection
+      workspaceRootCache.clear();
+    }
   }
 
   if (shouldRevalidate) {
@@ -1866,7 +1911,7 @@ connection.onDidChangeWatchedFiles((params) => {
     // Force revalidation of all documents
     validateAllTextDocuments(connection, documents.all());
   } else {
-    trace(`[DEBUG] No .htmlhintrc files changed, skipping revalidation`);
+    trace(`[DEBUG] No relevant files changed, skipping revalidation`);
   }
 });
 
@@ -2034,3 +2079,88 @@ connection.onRequest(
 );
 
 connection.listen();
+
+/**
+ * Check if a file should be ignored based on .gitignore patterns
+ */
+function shouldIgnoreFile(filePath: string, workspaceRoot: string): boolean {
+  try {
+    // Find the .gitignore file in the workspace root
+    const gitignorePath = path.join(workspaceRoot, ".gitignore");
+
+    if (!fs.existsSync(gitignorePath)) {
+      return false; // No .gitignore file, so don't ignore anything
+    }
+
+    // Check cache first
+    if (gitignoreCache.has(workspaceRoot)) {
+      const ig = gitignoreCache.get(workspaceRoot);
+      const relativePath = path.relative(workspaceRoot, filePath);
+      return ig.ignores(relativePath);
+    }
+
+    // Parse .gitignore file
+    const gitignoreContent = fs.readFileSync(gitignorePath, "utf8");
+    const ig = ignore().add(gitignoreContent);
+
+    // Cache the parsed patterns
+    gitignoreCache.set(workspaceRoot, ig);
+
+    // Check if the file should be ignored
+    const relativePath = path.relative(workspaceRoot, filePath);
+    return ig.ignores(relativePath);
+  } catch (error) {
+    trace(`[DEBUG] Error checking .gitignore for ${filePath}: ${error}`);
+    return false; // On error, don't ignore the file
+  }
+}
+
+/**
+ * Find the workspace root directory by looking for .git directory or .gitignore file
+ */
+function findWorkspaceRoot(filePath: string): string | null {
+  try {
+    // Check cache first
+    const cacheKey = path.dirname(filePath);
+    if (workspaceRootCache.has(cacheKey)) {
+      return workspaceRootCache.get(cacheKey);
+    }
+
+    let currentDir = path.dirname(filePath);
+    const rootDir = path.parse(filePath).root;
+    const visitedDirs = new Set<string>();
+
+    while (currentDir !== rootDir && !visitedDirs.has(currentDir)) {
+      visitedDirs.add(currentDir);
+
+      // Check for .git directory or .gitignore file
+      const gitPath = path.join(currentDir, ".git");
+      const gitignorePath = path.join(currentDir, ".gitignore");
+
+      if (fs.existsSync(gitPath) || fs.existsSync(gitignorePath)) {
+        // Cache the result for this directory and all its subdirectories
+        visitedDirs.forEach((dir) => {
+          workspaceRootCache.set(dir, currentDir);
+        });
+        return currentDir;
+      }
+
+      // Move up one directory
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) {
+        break; // Reached root
+      }
+      currentDir = parentDir;
+    }
+
+    // Cache negative results too
+    visitedDirs.forEach((dir) => {
+      workspaceRootCache.set(dir, null);
+    });
+
+    return null; // No workspace root found
+  } catch (error) {
+    trace(`[DEBUG] Error finding workspace root for ${filePath}: ${error}`);
+    return null;
+  }
+}

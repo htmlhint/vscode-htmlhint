@@ -58,6 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
       fileEvents: [
         vscode.workspace.createFileSystemWatcher("**/.htmlhintrc"),
         vscode.workspace.createFileSystemWatcher("**/.htmlhintrc.json"),
+        vscode.workspace.createFileSystemWatcher("**/.gitignore"),
       ],
     },
     middleware: {
