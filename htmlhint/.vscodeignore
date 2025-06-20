@@ -36,6 +36,12 @@
 images/hero.png
 images/hover.png
 images/status-bar.png
+**/node_modules/async/**
+**/node_modules/htmlhint/dist/htmlhint.min.js
+**/node_modules/htmlhint/cli/formatter.js
+**/node_modules/htmlhint/cli/htmlhint.js
+**/node_modules/htmlhint/cli/parse-glob.js
+**/node_modules/htmlhint/cli/formatters/**
 **/node_modules/**/test/**
 **/node_modules/**/tests/**
 **/node_modules/**/*.md
@@ -48,6 +54,9 @@ images/status-bar.png
 **/node_modules/**/*.map
 **/node_modules/**/.bin/**
 **/node_modules/**/bin/**
+**/node_modules/**/copy/**
+**/node_modules/**/move/**
+**/node_modules/**/empty/**
 **/node_modules/**/*.cmd
 **/node_modules/**/*.ps1
 **/node_modules/**/*.sh
