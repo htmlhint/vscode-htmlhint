@@ -41,6 +41,7 @@ images/status-bar.png
 **/node_modules/**/*.md
 **/node_modules/**/*.txt
 **/node_modules/**/LICENSE*
+**/node_modules/**/LICENSE-MIT*
 **/node_modules/**/license*
 **/node_modules/**/CHANGELOG*
 **/node_modules/**/changelog*

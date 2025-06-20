@@ -2,8 +2,11 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
-### v1.10.3 (2025-06-20)
+### v1.11.0 (2025-06-20)
 
+- Option to skip linting files ignored by `.gitignore` (`htmlhint.ignoreGitignore`).
+  - When enabled, HTMLHint will not lint files or folders listed in your workspace's `.gitignore` (e.g., `node_modules/`, `dist/`, etc).
+  - Enable this in VS Code settings: `HTMLHint: Ignore Gitignore`.
 - Add autofix for `attr-whitespace` rule
 
 ### v1.10.2 (2025-06-19)

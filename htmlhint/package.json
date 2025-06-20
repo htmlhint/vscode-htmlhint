@@ -3,7 +3,7 @@
   "displayName": "HTMLHint",
   "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
   "icon": "images/icon.png",
-  "version": "1.10.3",
+  "version": "1.11.0",
   "publisher": "HTMLHint",
   "galleryBanner": {
     "color": "#333333",
@@ -66,6 +66,11 @@
           "type": "string",
           "default": null,
           "description": "The HTMLHint options config file path."
+        },
+        "htmlhint.ignoreGitignore": {
+          "type": "boolean",
+          "default": false,
+          "description": "Skip linting files that are ignored by .gitignore. This is useful to avoid linting generated files, dependencies, and other files that shouldn't be checked."
         }
       }
     },
@@ -82,7 +87,7 @@
     "vscode:prepublish": "npm run compile && npm run bundle-dependencies",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "bundle-dependencies": "npm install --no-package-lock --no-save --no-fund htmlhint@1.6.3 strip-json-comments@3.1.1 vscode-languageserver@9.0.1 vscode-languageserver-textdocument@1.0.12 vscode-uri@3.1.0",
+    "bundle-dependencies": "npm install --no-package-lock --no-save --no-fund htmlhint@1.6.3 strip-json-comments@3.1.1 vscode-languageserver@9.0.1 vscode-languageserver-textdocument@1.0.12 vscode-uri@3.1.0 ignore@5.2.2",
     "package": "vsce package"
   },
   "devDependencies": {
@@ -93,6 +98,7 @@
   },
   "dependencies": {
     "htmlhint": "1.6.3",
+    "ignore": "^5.2.2",
     "strip-json-comments": "3.1.1",
     "vscode-languageclient": "9.0.1",
     "vscode-languageserver": "9.0.1",
@@ -105,7 +111,8 @@
     "strip-json-comments",
     "vscode-languageserver",
     "vscode-languageserver-textdocument",
-    "vscode-uri"
+    "vscode-uri",
+    "ignore"
   ],
   "volta": {
     "node": "22.16.0"

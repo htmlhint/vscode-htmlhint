@@ -125,3 +125,28 @@ Here's an example using the `htmlhint.documentSelector` and `htmlhint.options` s
   "title-require": true
 }
 ```
+
+## Skipping Linting for `.gitignore`-d Files
+
+You can configure the extension to **skip linting files and folders that are listed in your `.gitignore`**. This is useful for ignoring generated files, dependencies, and other files you don't want to lint (like `node_modules/`, `dist/`, `build/`, etc).
+
+### How to Enable
+
+1. Open VS Code settings.
+2. Search for `HTMLHint: Ignore Gitignore`.
+3. Enable the option:
+   **`htmlhint.ignoreGitignore`** (default: `false`)
+
+When enabled, any HTML files ignored by your workspace's `.gitignore` will not be linted by the extension.
+
+### Example
+
+If your `.gitignore` contains:
+
+```
+node_modules/
+dist/
+*.tmp
+```
+
+Then files like `dist/index.html` or `node_modules/foo/bar.html` will be skipped by HTMLHint.
