@@ -49,6 +49,9 @@ let stripJsonComments: any = require("strip-json-comments");
 // Cache for gitignore patterns to avoid repeatedly parsing .gitignore files
 let gitignoreCache: Map<string, any> = new Map();
 
+// Cache for workspace root detection to avoid repeated filesystem calls
+let workspaceRootCache: Map<string, string | null> = new Map();
+
 interface Settings {
   htmlhint: {
     configFile: string;
@@ -1832,6 +1835,9 @@ connection.onDidChangeConfiguration((params) => {
       // Clear gitignore cache when settings change
       gitignoreCache.clear();
 
+      // Clear workspace root cache when settings change
+      workspaceRootCache.clear();
+
       trace(`[DEBUG] Triggering revalidation due to settings change`);
       validateAllTextDocuments(connection, documents.all());
     })
@@ -1844,6 +1850,7 @@ connection.onDidChangeConfiguration((params) => {
           htmlhintrcOptions[configPath] = undefined;
         });
         gitignoreCache.clear();
+        workspaceRootCache.clear();
         validateAllTextDocuments(connection, documents.all());
       }
     });
@@ -1893,6 +1900,9 @@ connection.onDidChangeWatchedFiles((params) => {
       // Clear gitignore cache when .gitignore changes
       trace(`[DEBUG] .gitignore file changed, clearing cache`);
       gitignoreCache.clear();
+
+      // Clear workspace root cache since it depends on .gitignore detection
+      workspaceRootCache.clear();
     }
   }
 
@@ -2110,15 +2120,28 @@ function shouldIgnoreFile(filePath: string, workspaceRoot: string): boolean {
  */
 function findWorkspaceRoot(filePath: string): string | null {
   try {
+    // Check cache first
+    const cacheKey = path.dirname(filePath);
+    if (workspaceRootCache.has(cacheKey)) {
+      return workspaceRootCache.get(cacheKey);
+    }
+
     let currentDir = path.dirname(filePath);
     const rootDir = path.parse(filePath).root;
+    const visitedDirs = new Set<string>();
 
-    while (currentDir !== rootDir) {
+    while (currentDir !== rootDir && !visitedDirs.has(currentDir)) {
+      visitedDirs.add(currentDir);
+
       // Check for .git directory or .gitignore file
-      if (
-        fs.existsSync(path.join(currentDir, ".git")) ||
-        fs.existsSync(path.join(currentDir, ".gitignore"))
-      ) {
+      const gitPath = path.join(currentDir, ".git");
+      const gitignorePath = path.join(currentDir, ".gitignore");
+
+      if (fs.existsSync(gitPath) || fs.existsSync(gitignorePath)) {
+        // Cache the result for this directory and all its subdirectories
+        visitedDirs.forEach((dir) => {
+          workspaceRootCache.set(dir, currentDir);
+        });
         return currentDir;
       }
 
@@ -2129,6 +2152,11 @@ function findWorkspaceRoot(filePath: string): string | null {
       }
       currentDir = parentDir;
     }
+
+    // Cache negative results too
+    visitedDirs.forEach((dir) => {
+      workspaceRootCache.set(dir, null);
+    });
 
     return null; // No workspace root found
   } catch (error) {
