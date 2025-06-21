@@ -39,6 +39,7 @@ The extension provides automatic fixes for many common HTML issues. Currently su
 - **`meta-description-require`** - Adds description meta tag
 - **`meta-viewport-require`** - Adds viewport meta tag
 - **`spec-char-escape`** - Escapes special characters (`<`, `>`)
+- **`tag-no-obsolete`** - Converts obsolete tags to modern equivalents (e.g., `<acronym>` to `<abbr>`)
 - **`tag-self-close`** - Converts self-closable tags to self-closing tags
 - **`tagname-lowercase`** - Converts uppercase tag names to lowercase
 - **`title-require`** - Adds `<title>` tag to document

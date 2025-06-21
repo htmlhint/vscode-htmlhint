@@ -15,6 +15,7 @@
   "meta-viewport-require": true,
   "spec-char-escape": true,
   "src-not-empty": true,
+  "tag-no-obsolete": true,
   "tag-pair": true,
   "tag-self-close": true,
   "tagname-lowercase": true,
