@@ -1567,6 +1567,226 @@ function createSpecCharEscapeFix(
 }
 
 /**
+ * Create auto-fix action for tag-no-obsolete rule
+ *
+ * This fixes obsolete HTML tags by converting them to their modern equivalents.
+ * Currently supports converting <acronym> tags to <abbr> tags.
+ *
+ * Example:
+ * - Before: <acronym title="HyperText Markup Language">HTML</acronym>
+ * - After:  <abbr title="HyperText Markup Language">HTML</abbr>
+ */
+function createTagNoObsoleteFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  trace(
+    `[DEBUG] createTagNoObsoleteFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
+  );
+
+  if (!diagnostic.data || diagnostic.data.ruleId !== "tag-no-obsolete") {
+    trace(`[DEBUG] createTagNoObsoleteFix: Invalid diagnostic data or ruleId`);
+    return null;
+  }
+
+  const text = document.getText();
+  const edits: TextEdit[] = [];
+
+  // Find all acronym tags in the entire document
+  const acronymPattern = /<\/?(acronym|ACRONYM)((?:\s+[^>]*?)?)\s*(\/?)>/gi;
+  let match;
+  const acronymTags: Array<{
+    startOffset: number;
+    endOffset: number;
+    tagName: string;
+    attributes: string;
+    selfClosing: string;
+    isClosingTag: boolean;
+    fullMatch: string;
+    line: number;
+    column: number;
+  }> = [];
+
+  // Collect all acronym tags with their positions
+  while ((match = acronymPattern.exec(text)) !== null) {
+    const startOffset = match.index;
+    const endOffset = startOffset + match[0].length;
+    const tagName = match[1].toLowerCase();
+    const attributes = match[2] || "";
+    const selfClosing = match[3] || "";
+    const isClosingTag = match[0].startsWith("</");
+
+    // Only handle acronym tags for now
+    if (tagName === "acronym") {
+      const position = document.positionAt(startOffset);
+      acronymTags.push({
+        startOffset,
+        endOffset,
+        tagName,
+        attributes,
+        selfClosing,
+        isClosingTag,
+        fullMatch: match[0],
+        line: position.line,
+        column: position.character,
+      });
+    }
+  }
+
+  // Find the diagnostic position
+  const diagnosticLine = diagnostic.data.line - 1;
+  const diagnosticCol = diagnostic.data.col - 1;
+
+  // Find the closest acronym tag to the diagnostic position
+  let closestTag: (typeof acronymTags)[0] | null = null;
+  let minDistance = Infinity;
+
+  for (const tag of acronymTags) {
+    const distance =
+      Math.abs(tag.line - diagnosticLine) +
+      Math.abs(tag.column - diagnosticCol);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestTag = tag;
+    }
+  }
+
+  if (!closestTag || minDistance > 20) {
+    trace(`[DEBUG] createTagNoObsoleteFix: No close acronym tag found`);
+    return null;
+  }
+
+  // If this is a self-closing tag, just convert it
+  if (closestTag.selfClosing === "/") {
+    const startPos = document.positionAt(closestTag.startOffset);
+    const endPos = document.positionAt(closestTag.endOffset);
+
+    edits.push({
+      range: { start: startPos, end: endPos },
+      newText: `<abbr${closestTag.attributes} />`,
+    });
+  } else if (closestTag.isClosingTag) {
+    // If this is a closing tag, find its opening tag
+    const openingTag = findOpeningTag(acronymTags, closestTag);
+    if (openingTag) {
+      // Convert both opening and closing tags
+      const openingStartPos = document.positionAt(openingTag.startOffset);
+      const openingEndPos = document.positionAt(openingTag.endOffset);
+      const closingStartPos = document.positionAt(closestTag.startOffset);
+      const closingEndPos = document.positionAt(closestTag.endOffset);
+
+      edits.push({
+        range: { start: openingStartPos, end: openingEndPos },
+        newText: `<abbr${openingTag.attributes}>`,
+      });
+      edits.push({
+        range: { start: closingStartPos, end: closingEndPos },
+        newText: "</abbr>",
+      });
+    }
+  } else {
+    // If this is an opening tag, find its closing tag
+    const closingTag = findClosingTag(acronymTags, closestTag);
+    if (closingTag) {
+      // Convert both opening and closing tags
+      const openingStartPos = document.positionAt(closestTag.startOffset);
+      const openingEndPos = document.positionAt(closestTag.endOffset);
+      const closingStartPos = document.positionAt(closingTag.startOffset);
+      const closingEndPos = document.positionAt(closingTag.endOffset);
+
+      edits.push({
+        range: { start: openingStartPos, end: openingEndPos },
+        newText: `<abbr${closestTag.attributes}>`,
+      });
+      edits.push({
+        range: { start: closingStartPos, end: closingEndPos },
+        newText: "</abbr>",
+      });
+    }
+  }
+
+  if (edits.length === 0) {
+    trace(`[DEBUG] createTagNoObsoleteFix: No edits created`);
+    return null;
+  }
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: edits,
+    },
+  };
+
+  return {
+    title: "Convert obsolete tag to modern equivalent",
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true,
+  };
+}
+
+/**
+ * Helper function to find the opening tag for a given closing tag
+ */
+function findOpeningTag(
+  tags: Array<{
+    startOffset: number;
+    endOffset: number;
+    tagName: string;
+    attributes: string;
+    selfClosing: string;
+    isClosingTag: boolean;
+    fullMatch: string;
+    line: number;
+    column: number;
+  }>,
+  closingTag: (typeof tags)[0],
+): (typeof tags)[0] | null {
+  // Find the most recent opening tag before this closing tag
+  let openingTag: (typeof tags)[0] | null = null;
+
+  for (const tag of tags) {
+    if (!tag.isClosingTag && tag.startOffset < closingTag.startOffset) {
+      if (!openingTag || tag.startOffset > openingTag.startOffset) {
+        openingTag = tag;
+      }
+    }
+  }
+
+  return openingTag;
+}
+
+/**
+ * Helper function to find the closing tag for a given opening tag
+ */
+function findClosingTag(
+  tags: Array<{
+    startOffset: number;
+    endOffset: number;
+    tagName: string;
+    attributes: string;
+    selfClosing: string;
+    isClosingTag: boolean;
+    fullMatch: string;
+    line: number;
+    column: number;
+  }>,
+  openingTag: (typeof tags)[0],
+): (typeof tags)[0] | null {
+  // Find the first closing tag after this opening tag
+  let closingTag: (typeof tags)[0] | null = null;
+
+  for (const tag of tags) {
+    if (tag.isClosingTag && tag.startOffset > openingTag.startOffset) {
+      if (!closingTag || tag.startOffset < closingTag.startOffset) {
+        closingTag = tag;
+      }
+    }
+  }
+
+  return closingTag;
+}
+
+/**
  * Create auto-fix actions for supported rules
  */
 async function createAutoFixes(
@@ -1655,6 +1875,10 @@ async function createAutoFixes(
         case "tag-self-close":
           trace(`[DEBUG] Calling createTagSelfCloseFix`);
           fix = createTagSelfCloseFix(document, diagnostic);
+          break;
+        case "tag-no-obsolete":
+          trace(`[DEBUG] Calling createTagNoObsoleteFix`);
+          fix = createTagNoObsoleteFix(document, diagnostic);
           break;
         default:
           trace(`[DEBUG] No autofix function found for rule: ${ruleId}`);

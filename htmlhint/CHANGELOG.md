@@ -2,6 +2,10 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.11.1 (2025-06-23)
+
+- Add autofix for `tag-no-obsolete` rule
+
 ### v1.11.0 (2025-06-20)
 
 - Option to skip linting files ignored by `.gitignore` (`htmlhint.ignoreGitignore`).
