@@ -1904,7 +1904,6 @@ async function createAutoFixes(
 
 connection.onInitialize(
   (params: InitializeParams, token: CancellationToken) => {
-    let rootFolder = params.rootPath;
     let initOptions: {
       nodePath: string;
     } = params.initializationOptions;
