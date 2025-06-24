@@ -48,6 +48,21 @@
 
     <!-- More void elements -->
     <img src="footer.jpg">
+
+        <!-- Test case 1: Obsolete acronym tag (should be converted to abbr) -->
+        <acronym title="HyperText Markup Language">HTML</acronym>
+
+        <!-- Test case 2: Multiple acronym tags -->
+        <p>This is an <acronym title="World Wide Web">WWW</acronym> example with <acronym title="Uniform Resource Locator">URL</acronym>.</p>
+
+        <!-- Test case 3: Acronym with attributes -->
+        <acronym title="Cascading Style Sheets" class="highlight">CSS</acronym>
+
+        <!-- Test case 4: Already correct abbr tag - should not trigger -->
+        <abbr title="JavaScript">JS</abbr>
+
+        <!-- Test case 5: Mixed case acronym -->
+        <ACRONYM title="Extensible Markup Language">XML</ACRONYM>
     <br />
   </body>
 </html>

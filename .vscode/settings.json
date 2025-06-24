@@ -2,8 +2,11 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "EditorConfig.EditorConfig",
+  "[javascript][typescript][json][jsonc][markdown][yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
   "editor.renderWhitespace": "all",
   "editor.trimAutoWhitespace": true,
   "files.trimTrailingWhitespace": true
