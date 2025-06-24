@@ -78,60 +78,6 @@ let linter: {
 let htmlhintrcOptions: Record<string, HtmlHintConfig | null | undefined> = {};
 
 /**
- * Given an htmlhint Error object, approximate the text range highlight
- */
-function getRange(
-  error: htmlhint.Error,
-  lines: string[],
-): {
-  start: { line: number; character: number };
-  end: { line: number; character: number };
-} {
-  let line = lines[error.line - 1];
-  if (!line) {
-    // Fallback if line doesn't exist
-    return {
-      start: {
-        line: error.line - 1,
-        character: error.col - 1,
-      },
-      end: {
-        line: error.line - 1,
-        character: error.col - 1,
-      },
-    };
-  }
-
-  let isWhitespace = false;
-  let curr = error.col;
-  while (curr < line.length && !isWhitespace) {
-    let char = line[curr];
-    isWhitespace =
-      char === " " ||
-      char === "\t" ||
-      char === "\n" ||
-      char === "\r" ||
-      char === "<";
-    ++curr;
-  }
-
-  if (isWhitespace) {
-    --curr;
-  }
-
-  return {
-    start: {
-      line: error.line - 1, // Html-hint line numbers are 1-based.
-      character: error.col - 1,
-    },
-    end: {
-      line: error.line - 1,
-      character: curr,
-    },
-  };
-}
-
-/**
  * Given an htmlhint.Error type return a VS Code server Diagnostic object
  */
 function makeDiagnostic(
