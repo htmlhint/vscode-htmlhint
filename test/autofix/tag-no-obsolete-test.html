@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Tag No Obsolete Test" />
+    <title>Tag No Obsolete Test</title>
+  </head>
+  <body>
+    <!-- Test case 1: Obsolete acronym tag (should be converted to abbr) -->
+    <acronym title="HyperText Markup Language">HTML</acronym>
+
+    <!-- Test case 2: Multiple acronym tags -->
+    <p>This is an <acronym title="World Wide Web">WWW</acronym> example with <acronym title="Uniform Resource Locator">URL</acronym>.</p>
+
+    <!-- Test case 3: Acronym with attributes -->
+    <acronym title="Cascading Style Sheets" class="highlight">CSS</acronym>
+
+    <!-- Test case 4: Already correct abbr tag - should not trigger -->
+    <abbr title="JavaScript">JS</abbr>
+
+    <!-- Test case 5: Mixed case acronym -->
+    <ACRONYM title="Extensible Markup Language">XML</ACRONYM>
+  </body>
+</html>

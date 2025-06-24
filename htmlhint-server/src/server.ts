@@ -19,107 +19,63 @@
  */
 
 import * as path from "path";
+import * as fs from "fs";
 import {
   createConnection,
   TextDocuments,
   Diagnostic,
   DiagnosticSeverity,
-  ProposedFeatures,
   InitializeParams,
   TextDocumentSyncKind,
   InitializeResult,
   Connection,
-  ErrorMessageTracker,
   CancellationToken,
   CodeActionParams,
-  Command,
   CodeAction,
   CodeActionKind,
   TextEdit,
   WorkspaceEdit,
-  CodeDescription,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as htmlhint from "htmlhint";
-import fs = require("fs");
 import { URI } from "vscode-uri";
 import ignore from "ignore";
-let stripJsonComments: any = require("strip-json-comments");
+import stripJsonComments from "strip-json-comments";
 
 // Cache for gitignore patterns to avoid repeatedly parsing .gitignore files
-let gitignoreCache: Map<string, any> = new Map();
+let gitignoreCache: Map<string, ReturnType<typeof ignore>> = new Map();
 
 // Cache for workspace root detection to avoid repeated filesystem calls
 let workspaceRootCache: Map<string, string | null> = new Map();
 
+interface HtmlHintSettings {
+  configFile: string;
+  enable: boolean;
+  options: Record<string, unknown>;
+  optionsFile: string;
+  ignoreGitignore: boolean;
+}
+
 interface Settings {
-  htmlhint: {
-    configFile: string;
-    enable: boolean;
-    options: any;
-    optionsFile: string;
-    ignoreGitignore: boolean;
-  };
-  [key: string]: any;
+  htmlhint: HtmlHintSettings;
+  [key: string]: unknown;
+}
+
+interface HtmlHintConfig {
+  [key: string]: unknown;
 }
 
 let settings: Settings | null = null;
-let linter: any = null;
+let linter: {
+  verify: (text: string, config?: HtmlHintConfig) => htmlhint.Error[];
+} | null = null;
 
 /**
  * This variable is used to cache loaded htmlhintrc objects.  It is a dictionary from path -> config object.
  * A value of null means a .htmlhintrc object didn't exist at the given path.
  * A value of undefined means the file at this path hasn't been loaded yet, or should be reloaded because it changed
  */
-let htmlhintrcOptions: any = {};
-
-/**
- * Given an htmlhint Error object, approximate the text range highlight
- */
-function getRange(error: htmlhint.Error, lines: string[]): any {
-  let line = lines[error.line - 1];
-  if (!line) {
-    // Fallback if line doesn't exist
-    return {
-      start: {
-        line: error.line - 1,
-        character: error.col - 1,
-      },
-      end: {
-        line: error.line - 1,
-        character: error.col - 1,
-      },
-    };
-  }
-
-  let isWhitespace = false;
-  let curr = error.col;
-  while (curr < line.length && !isWhitespace) {
-    let char = line[curr];
-    isWhitespace =
-      char === " " ||
-      char === "\t" ||
-      char === "\n" ||
-      char === "\r" ||
-      char === "<";
-    ++curr;
-  }
-
-  if (isWhitespace) {
-    --curr;
-  }
-
-  return {
-    start: {
-      line: error.line - 1, // Html-hint line numbers are 1-based.
-      character: error.col - 1,
-    },
-    end: {
-      line: error.line - 1,
-      character: curr,
-    },
-  };
-}
+let htmlhintrcOptions: Record<string, HtmlHintConfig | null | undefined> = {};
 
 /**
  * Given an htmlhint.Error type return a VS Code server Diagnostic object
@@ -157,8 +113,8 @@ function makeDiagnostic(
  * Get the HTMLHint configuration settings for the given HTML file.  This method will take care of whether to use
  * VS Code settings, or to use a .htmlhintrc file.
  */
-function getConfiguration(filePath: string): any {
-  let options: any;
+function getConfiguration(filePath: string): HtmlHintConfig {
+  let options: HtmlHintConfig | undefined;
 
   trace(`[HTMLHint Debug] Getting configuration for file: ${filePath}`);
   trace(`[HTMLHint Debug] Current settings: ${JSON.stringify(settings)}`);
@@ -228,8 +184,8 @@ function getConfiguration(filePath: string): any {
  * Given the path of an HTML file, this function will look in current directory & parent directories
  * to find a .htmlhintrc file to use as the linter configuration.  The settings are
  */
-function findConfigForHtmlFile(base: string) {
-  let options: any;
+function findConfigForHtmlFile(base: string): HtmlHintConfig | undefined {
+  let options: HtmlHintConfig | undefined;
   trace(`[HTMLHint Debug] Looking for config starting from: ${base}`);
 
   if (fs.existsSync(base)) {
@@ -285,8 +241,8 @@ function findConfigForHtmlFile(base: string) {
 /**
  * Given a path to a .htmlhintrc file, load it into a javascript object and return it.
  */
-function loadConfigurationFile(configFile: string): any {
-  let ruleset: any = null;
+function loadConfigurationFile(configFile: string): HtmlHintConfig | null {
+  let ruleset: HtmlHintConfig | null = null;
   trace(`[HTMLHint Debug] Attempting to load config file: ${configFile}`);
   if (fs.existsSync(configFile)) {
     trace(`[HTMLHint Debug] Config file exists, reading: ${configFile}`);
@@ -339,16 +295,22 @@ function validateAllTextDocuments(
     return;
   }
 
-  let tracker = new ErrorMessageTracker();
+  // Collect all errors and send them together instead of using ErrorMessageTracker
+  const errors: string[] = [];
   documents.forEach((document) => {
     try {
       trace(`[DEBUG] Revalidating document: ${document.uri}`);
       validateTextDocument(connection, document);
     } catch (err) {
-      tracker.add(getErrorMessage(err, document));
+      errors.push(getErrorMessage(err, document));
     }
   });
-  tracker.sendErrors(connection);
+
+  // Send all errors at once if there are any
+  if (errors.length > 0) {
+    connection.window.showErrorMessage(errors.join("\n"));
+  }
+
   trace(`[DEBUG] validateAllTextDocuments completed`);
 }
 
@@ -363,7 +325,7 @@ function validateTextDocument(
   }
 }
 
-let connection: Connection = createConnection(ProposedFeatures.all);
+let connection: Connection = createConnection();
 let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 documents.listen(connection);
 
@@ -1914,7 +1876,9 @@ connection.onInitialize(
       : undefined;
 
     // Since Files API is no longer available, we'll use embedded htmlhint directly
-    linter = htmlhint.default || htmlhint.HTMLHint || htmlhint;
+    linter = (htmlhint.default ||
+      htmlhint.HTMLHint ||
+      htmlhint) as typeof linter;
 
     let result: InitializeResult = {
       capabilities: {
