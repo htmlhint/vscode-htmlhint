@@ -43,4 +43,3 @@ jobs:
           VALIDATE_NATURAL_LANGUAGE: false
           VALIDATE_TYPESCRIPT_ES: false
           VALIDATE_TYPESCRIPT_PRETTIER: false
-          VALIDATE_TYPESCRIPT_STANDARD: false
