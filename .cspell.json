@@ -12,9 +12,11 @@
     "nvmrc",
     "rollup",
     "ruleset",
+    "sarif",
     "tagname",
     "vite",
-    "VSIX"
+    "VSIX",
+    "ZIZMOR"
   ],
   "flagWords": [
     "hte"
