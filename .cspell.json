@@ -12,6 +12,7 @@
     "nvmrc",
     "rollup",
     "ruleset",
+    "sarif",
     "tagname",
     "vite",
     "VSIX"
