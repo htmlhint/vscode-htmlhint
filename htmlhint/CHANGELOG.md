@@ -2,6 +2,10 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.12.0 (2025-09-15)
+
+- Update HTMLHint to v1.7.0
+
 ### v1.11.1 (2025-06-24)
 
 - Add autofix for `tag-no-obsolete` rule
