@@ -36,7 +36,6 @@ jobs:
           SUPPRESS_POSSUM: true
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_EDITORCONFIG: false
-          VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
           VALIDATE_HTML: false
           VALIDATE_HTML_PRETTIER: false
           VALIDATE_JSCPD: false
