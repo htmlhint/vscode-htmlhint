@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/htmlhint/vscode-htmlhint.git"
+    "url": "https://github.com/htmlhint/vscode-htmlhint.git"
   },
   "funding": "https://opencollective.com/htmlhint",
   "license": "MIT",
@@ -49,6 +49,6 @@
     "node": ">= 22"
   },
   "volta": {
-    "node": "22.16.0"
+    "node": "22.19.0"
   }
 }
