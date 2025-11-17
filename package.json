@@ -9,12 +9,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/htmlhint/vscode-htmlhint.git"
+    "url": "git+https://github.com/htmlhint/vscode-htmlhint.git"
   },
   "funding": "https://opencollective.com/htmlhint",
   "license": "MIT",
   "author": "HTMLHint",
   "scripts": {
+    "build": "npm run compile",
     "lint": "eslint -c .eslintrc.js --ext .ts .",
     "lint:fix": "eslint -c .eslintrc.js --ext .ts . --fix",
     "prettier": "prettier --write \"**/*.{js,md,ts,yml}\"",
@@ -36,14 +37,14 @@
     "@types/vscode": "^1.89.0",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
+    "@vscode/test-electron": "^1.6.2",
     "eslint": "8.57.1",
     "eslint-config-prettier": "10.1.8",
     "glob": "^11.0.3",
     "mocha": "^11.7.5",
     "prettier": "3.6.2",
     "ts-node": "^10.9.2",
-    "typescript": "5.5.4",
-    "vscode-test": "^1.6.1"
+    "typescript": "5.5.4"
   },
   "engines": {
     "node": ">= 22"
