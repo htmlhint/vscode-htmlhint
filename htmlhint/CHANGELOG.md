@@ -2,6 +2,11 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.13.0 (2025-11-25)
+
+- Update HTMLHint to v1.8.0
+- Add support for [disabling rules via HTML comments](https://htmlhint.com/configuration/#disabling-rules-inline)
+
 ### v1.12.0 (2025-09-15)
 
 - Update HTMLHint to v1.7.0
