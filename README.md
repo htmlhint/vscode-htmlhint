@@ -51,3 +51,11 @@ ext install HTMLHint.vscode-htmlhint
 ## Building the Extension
 
 - run `vsce package` in extension root folder to create the VSIX file.
+
+## Releasing a new version
+
+- update the version in the `package.json` file
+- update the `CHANGELOG.md` file
+- run `npm run package` in the extension root folder to create the VSIX file
+- upload the VSIX file to the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=HTMLHint.vscode-htmlhint)
+- upload the VSIX file to the [Open VSX Registry](https://open-vsx.org/user-settings/extensions)
