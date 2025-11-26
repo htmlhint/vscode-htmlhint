@@ -1967,6 +1967,105 @@ function createAttrNoDuplicationFix(
 }
 
 /**
+ * Create auto-fix action for form-method-require rule
+ */
+function createFormMethodRequireFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  trace(
+    `[DEBUG] createFormMethodRequireFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
+  );
+
+  if (!diagnostic.data || diagnostic.data.ruleId !== "form-method-require") {
+    trace(
+      `[DEBUG] createFormMethodRequireFix: Invalid diagnostic data or ruleId`,
+    );
+    return null;
+  }
+
+  const text = document.getText();
+  const diagnosticOffset = document.offsetAt(diagnostic.range.start);
+
+  // Use robust tag boundary detection to find the form tag
+  const tagBoundaries = findTagBoundaries(text, diagnosticOffset);
+  if (!tagBoundaries) {
+    trace(`[DEBUG] createFormMethodRequireFix: Could not find tag boundaries`);
+    return null;
+  }
+
+  const { tagStart, tagEnd } = tagBoundaries;
+  const tagContent = text.substring(tagStart, tagEnd + 1);
+  trace(`[DEBUG] createFormMethodRequireFix: Found tag: ${tagContent}`);
+
+  // Verify this is a form tag
+  const formTagMatch = tagContent.match(/^<\s*form\b/i);
+  if (!formTagMatch) {
+    trace(`[DEBUG] createFormMethodRequireFix: Not a form tag`);
+    return null;
+  }
+
+  // Check if method attribute already exists
+  const methodAttrMatch = tagContent.match(/\bmethod\s*=/i);
+  if (methodAttrMatch) {
+    trace(
+      `[DEBUG] createFormMethodRequireFix: Method attribute already exists`,
+    );
+    return null;
+  }
+
+  // Find the best position to insert the method attribute
+  // We'll add it after the opening form tag name but before the closing >
+  const formMatch = tagContent.match(/^(<\s*form)(\s+[^>]*?)?(\/?\s*>)$/i);
+  if (!formMatch) {
+    trace(
+      `[DEBUG] createFormMethodRequireFix: Could not parse form tag structure`,
+    );
+    return null;
+  }
+
+  const beforeAttrs = formMatch[1]; // "<form"
+  const existingAttrs = formMatch[2] || ""; // existing attributes
+
+  // Calculate insertion position
+  const newText = ' method=""';
+  let insertPosition: number;
+
+  if (existingAttrs.trim()) {
+    // There are existing attributes, add method after them
+    insertPosition = tagStart + beforeAttrs.length + existingAttrs.length;
+  } else {
+    // No existing attributes, add method right after "form"
+    insertPosition = tagStart + beforeAttrs.length;
+  }
+
+  const edit: TextEdit = {
+    range: {
+      start: document.positionAt(insertPosition),
+      end: document.positionAt(insertPosition),
+    },
+    newText: newText,
+  };
+
+  trace(
+    `[DEBUG] createFormMethodRequireFix: Will insert "${newText}" at position ${insertPosition}`,
+  );
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: [edit],
+    },
+  };
+
+  return {
+    title: 'Add method="" attribute to form',
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true,
+  };
+}
+
+/**
  * Create auto-fix actions for supported rules
  */
 async function createAutoFixes(
@@ -2063,6 +2162,10 @@ async function createAutoFixes(
         case "attr-no-duplication":
           trace(`[DEBUG] Calling createAttrNoDuplicationFix`);
           fix = createAttrNoDuplicationFix(document, diagnostic);
+          break;
+        case "form-method-require":
+          trace(`[DEBUG] Calling createFormMethodRequireFix`);
+          fix = createFormMethodRequireFix(document, diagnostic);
           break;
         default:
           trace(`[DEBUG] No autofix function found for rule: ${ruleId}`);
