@@ -1749,6 +1749,159 @@ function findClosingTag(
 }
 
 /**
+ * Create auto-fix action for attr-no-duplication rule
+ * Only fixes duplicates where the attribute values are identical
+ */
+function createAttrNoDuplicationFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  trace(
+    `[DEBUG] createAttrNoDuplicationFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
+  );
+
+  if (!diagnostic.data || diagnostic.data.ruleId !== "attr-no-duplication") {
+    trace(`[DEBUG] createAttrNoDuplicationFix: Invalid diagnostic data or ruleId`);
+    return null;
+  }
+
+  const text = document.getText();
+  const lines = text.split("\n");
+  const diagnosticLine = diagnostic.data.line - 1;
+  const line = lines[diagnosticLine];
+
+  if (!line) {
+    trace(`[DEBUG] createAttrNoDuplicationFix: Line not found`);
+    return null;
+  }
+
+  // Find the tag containing the duplicate attributes
+  // Look for the opening tag that contains the diagnostic position
+  const diagnosticOffset = document.offsetAt(diagnostic.range.start);
+
+  // Find the tag boundaries around the diagnostic position
+  let tagStart = text.lastIndexOf('<', diagnosticOffset);
+  let tagEnd = text.indexOf('>', diagnosticOffset);
+
+  if (tagStart === -1 || tagEnd === -1 || tagStart >= tagEnd) {
+    trace(`[DEBUG] createAttrNoDuplicationFix: Could not find tag boundaries`);
+    return null;
+  }
+
+  const tagContent = text.substring(tagStart, tagEnd + 1);
+  trace(`[DEBUG] createAttrNoDuplicationFix: Found tag: ${tagContent}`);
+
+  // Parse attributes from the tag
+  // This regex matches attribute="value" or attribute='value' or attribute=value
+  const attrPattern = /(\w+(?:-\w+)*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
+  const attributes: Array<{
+    name: string;
+    value: string;
+    fullMatch: string;
+    startIndex: number;
+    endIndex: number;
+  }> = [];
+
+  let match;
+  while ((match = attrPattern.exec(tagContent)) !== null) {
+    const name = match[1].toLowerCase();
+    const value = match[2] || match[3] || match[4] || '';
+    attributes.push({
+      name,
+      value,
+      fullMatch: match[0],
+      startIndex: match.index,
+      endIndex: match.index + match[0].length,
+    });
+  }
+
+  trace(`[DEBUG] createAttrNoDuplicationFix: Found ${attributes.length} attributes`);
+
+  // Find duplicate attributes with the same value
+  const duplicatesToRemove: typeof attributes = [];
+  const seenAttributes = new Map<string, typeof attributes[0]>();
+
+  for (const attr of attributes) {
+    const existing = seenAttributes.get(attr.name);
+    if (existing) {
+      // Found a duplicate - check if values are identical
+      if (existing.value === attr.value) {
+        // Values are the same, we can safely remove the duplicate
+        duplicatesToRemove.push(attr);
+        trace(`[DEBUG] createAttrNoDuplicationFix: Found duplicate ${attr.name}="${attr.value}" to remove`);
+      } else {
+        // Values are different, don't autofix
+        trace(`[DEBUG] createAttrNoDuplicationFix: Found duplicate ${attr.name} with different values: "${existing.value}" vs "${attr.value}" - not autofixing`);
+        return null;
+      }
+    } else {
+      seenAttributes.set(attr.name, attr);
+    }
+  }
+
+  if (duplicatesToRemove.length === 0) {
+    trace(`[DEBUG] createAttrNoDuplicationFix: No safe duplicates to remove`);
+    return null;
+  }
+
+  // Create edits to remove the duplicate attributes
+  const edits: TextEdit[] = [];
+
+  // Sort duplicates by position (reverse order to avoid offset issues)
+  duplicatesToRemove.sort((a, b) => b.startIndex - a.startIndex);
+
+  for (const duplicate of duplicatesToRemove) {
+    const absoluteStart = tagStart + duplicate.startIndex;
+    const absoluteEnd = tagStart + duplicate.endIndex;
+
+    // Include any trailing whitespace after the attribute
+    let endPos = absoluteEnd;
+    while (endPos < text.length && /\s/.test(text[endPos])) {
+      endPos++;
+    }
+
+    // Include any leading whitespace before the attribute (but not if it's the first attribute)
+    let startPos = absoluteStart;
+    if (duplicate.startIndex > 0) {
+      while (startPos > tagStart && /\s/.test(text[startPos - 1])) {
+        startPos--;
+      }
+    }
+
+    edits.push({
+      range: {
+        start: document.positionAt(startPos),
+        end: document.positionAt(endPos),
+      },
+      newText: '',
+    });
+
+    trace(`[DEBUG] createAttrNoDuplicationFix: Will remove "${text.substring(startPos, endPos)}"`);
+  }
+
+  if (edits.length === 0) {
+    return null;
+  }
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: edits,
+    },
+  };
+
+  const title = duplicatesToRemove.length === 1
+    ? `Remove duplicate ${duplicatesToRemove[0].name} attribute`
+    : `Remove ${duplicatesToRemove.length} duplicate attributes`;
+
+  return {
+    title,
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true,
+  };
+}
+
+/**
  * Create auto-fix actions for supported rules
  */
 async function createAutoFixes(
@@ -1841,6 +1994,10 @@ async function createAutoFixes(
         case "tag-no-obsolete":
           trace(`[DEBUG] Calling createTagNoObsoleteFix`);
           fix = createTagNoObsoleteFix(document, diagnostic);
+          break;
+        case "attr-no-duplication":
+          trace(`[DEBUG] Calling createAttrNoDuplicationFix`);
+          fix = createAttrNoDuplicationFix(document, diagnostic);
           break;
         default:
           trace(`[DEBUG] No autofix function found for rule: ${ruleId}`);
