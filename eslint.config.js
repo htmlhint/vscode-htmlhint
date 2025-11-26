@@ -54,15 +54,9 @@ module.exports = [
       "@typescript-eslint/no-empty-interface": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
+      // Disable base no-unused-vars rule for TypeScript files to prevent conflicts
+      "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-          args: "after-used",
-        },
-      ],
-      "no-unused-vars": [
         "error",
         {
           argsIgnorePattern: "^_",
