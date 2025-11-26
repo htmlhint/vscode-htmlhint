@@ -30,6 +30,7 @@ The extension provides automatic fixes for many common HTML issues. Currently su
 - **`attr-lowercase`** - Converts uppercase attribute names to lowercase
 - **`attr-no-duplication`** - Removes duplicate attributes (only when values are identical)
 - **`attr-no-unnecessary-whitespace`** - Removes unnecessary whitespace around attributes
+- **`attr-value-no-duplication`** - Removes duplicate values within attributes (e.g., `class="btn btn primary"` → `class="btn primary"`)
 - **`attr-value-double-quotes`** - Converts single quotes to double quotes in attributes
 - **`attr-whitespace`** - Removes leading and trailing whitespace from attribute values
 - **`button-type-require`** - Adds type attribute to buttons
