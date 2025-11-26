@@ -67,7 +67,7 @@ interface HtmlHintConfig {
 
 let settings: Settings | null = null;
 let linter: {
-  verify: (text: string, config?: HtmlHintConfig) => htmlhint.Error[];
+  verify: (_text: string, _config?: HtmlHintConfig) => htmlhint.Error[];
 } | null = null;
 
 /**
@@ -82,9 +82,8 @@ let htmlhintrcOptions: Record<string, HtmlHintConfig | null | undefined> = {};
  */
 function makeDiagnostic(
   problem: htmlhint.Error,
-  document: TextDocument,
+  _document: TextDocument,
 ): Diagnostic {
-  const lines = document.getText().split("\n");
   const col = problem.col - 1;
   const endCol = problem.col + (problem.raw?.length || 0) - 1;
 
@@ -2190,16 +2189,7 @@ async function createAutoFixes(
 }
 
 connection.onInitialize(
-  (params: InitializeParams, token: CancellationToken) => {
-    let initOptions: {
-      nodePath: string;
-    } = params.initializationOptions;
-    let nodePath = initOptions
-      ? initOptions.nodePath
-        ? initOptions.nodePath
-        : undefined
-      : undefined;
-
+  (_params: InitializeParams, _token: CancellationToken) => {
     // Since Files API is no longer available, we'll use embedded htmlhint directly
     linter = (htmlhint.default ||
       htmlhint.HTMLHint ||
@@ -2281,7 +2271,6 @@ function doValidate(connection: Connection, document: TextDocument): void {
     }
 
     let contents = document.getText();
-    let lines = contents.split("\n");
 
     let config = getConfiguration(fsPath);
     trace(`[DEBUG] Loaded config: ${JSON.stringify(config)}`);
