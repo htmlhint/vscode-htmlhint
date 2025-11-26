@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attribute Value No Duplication Test</title>
+  </head>
+  <body>
+    <!-- Test case 1: Duplicate values in class attribute (should be fixed) -->
+    <div class="btn btn primary">Button 1</div>
+
+    <!-- Test case 2: Multiple duplicates in class attribute (should be fixed) -->
+    <div class="btn primary btn secondary primary">Button 2</div>
+
+    <!-- Test case 3: No duplicates - should not trigger -->
+    <div class="btn primary secondary">Button 3</div>
+
+    <!-- Test case 4: Single class value - should not trigger -->
+    <div class="btn">Button 4</div>
+
+    <!-- Test case 5: Empty class - should not trigger -->
+    <div class="">Button 5</div>
+
+    <!-- Test case 6: Duplicate values with extra whitespace -->
+    <div class="  btn   btn   primary  ">Button 6</div>
+
+    <!-- Test case 7: Other attributes that might have duplicate values -->
+    <div data-tags="tag1 tag2 tag1 tag3">Button 7</div>
+
+    <!-- Test case 8: Mixed case duplicates (case-sensitive) -->
+    <div class="btn Btn BTN">Button 8</div>
+  </body>
+</html>

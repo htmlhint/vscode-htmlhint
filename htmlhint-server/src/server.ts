@@ -1966,6 +1966,102 @@ function createAttrNoDuplicationFix(
 }
 
 /**
+ * Create auto-fix action for attr-value-no-duplication rule
+ * Removes duplicate values within attribute values (e.g., class="btn btn primary" -> class="btn primary")
+ */
+function createAttrValueNoDuplicationFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  trace(
+    `[DEBUG] createAttrValueNoDuplicationFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
+  );
+
+  if (!diagnostic.data || diagnostic.data.ruleId !== "attr-value-no-duplication") {
+    trace(
+      `[DEBUG] createAttrValueNoDuplicationFix: Invalid diagnostic data or ruleId`,
+    );
+    return null;
+  }
+
+  const text = document.getText();
+  const diagnosticOffset = document.offsetAt(diagnostic.range.start);
+
+  // Use robust tag boundary detection
+  const tagBoundaries = findTagBoundaries(text, diagnosticOffset);
+  if (!tagBoundaries) {
+    trace(`[DEBUG] createAttrValueNoDuplicationFix: Could not find tag boundaries`);
+    return null;
+  }
+
+  const { tagStart, tagEnd } = tagBoundaries;
+  const tagContent = text.substring(tagStart, tagEnd + 1);
+  trace(`[DEBUG] createAttrValueNoDuplicationFix: Found tag: ${tagContent}`);
+
+  // Parse attributes from the tag to find the one with duplicate values
+  const attrPattern = /(\w+(?:-\w+)*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
+  let match;
+  const edits: TextEdit[] = [];
+
+  while ((match = attrPattern.exec(tagContent)) !== null) {
+    const attrName = match[1];
+    const attrValue = match[2] || match[3] || match[4] || "";
+    const fullMatch = match[0];
+    const attrStartIndex = match.index;
+    const attrEndIndex = match.index + fullMatch.length;
+
+    // Check if this attribute contains duplicate values
+    if (attrValue.trim()) {
+      const values = attrValue.trim().split(/\s+/);
+      const uniqueValues = [...new Set(values)]; // Remove duplicates while preserving order
+
+      if (values.length !== uniqueValues.length) {
+        // Found duplicates, create an edit to fix them
+        const newAttrValue = uniqueValues.join(' ');
+        const quote = match[2] !== undefined ? '"' : match[3] !== undefined ? "'" : '';
+        const newFullMatch = quote
+          ? `${attrName}=${quote}${newAttrValue}${quote}`
+          : `${attrName}=${newAttrValue}`;
+
+        const absoluteStart = tagStart + attrStartIndex;
+        const absoluteEnd = tagStart + attrEndIndex;
+
+        edits.push({
+          range: {
+            start: document.positionAt(absoluteStart),
+            end: document.positionAt(absoluteEnd),
+          },
+          newText: newFullMatch,
+        });
+
+        trace(
+          `[DEBUG] createAttrValueNoDuplicationFix: Will replace "${fullMatch}" with "${newFullMatch}"`,
+        );
+        break; // Only fix one attribute per diagnostic
+      }
+    }
+  }
+
+  if (edits.length === 0) {
+    trace(`[DEBUG] createAttrValueNoDuplicationFix: No edits created`);
+    return null;
+  }
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: edits,
+    },
+  };
+
+  return {
+    title: "Remove duplicate values from attribute",
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true,
+  };
+}
+
+/**
  * Create auto-fix action for form-method-require rule
  */
 function createFormMethodRequireFix(
@@ -2161,6 +2257,10 @@ async function createAutoFixes(
         case "attr-no-duplication":
           trace(`[DEBUG] Calling createAttrNoDuplicationFix`);
           fix = createAttrNoDuplicationFix(document, diagnostic);
+          break;
+        case "attr-value-no-duplication":
+          trace(`[DEBUG] Calling createAttrValueNoDuplicationFix`);
+          fix = createAttrValueNoDuplicationFix(document, diagnostic);
           break;
         case "form-method-require":
           trace(`[DEBUG] Calling createFormMethodRequireFix`);

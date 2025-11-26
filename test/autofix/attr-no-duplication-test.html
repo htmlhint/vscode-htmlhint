@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attribute No Duplication Test</title>
+  </head>
+  <body>
+    <!-- Test case 1: Duplicate attributes with same value (should be fixed) -->
+    <div class="btn" class="btn">Button 1</div>
+
+    <!-- Test case 2: Duplicate attributes with different values (should NOT be fixed) -->
+    <div id="test1" id="test2">Button 2</div>
+
+    <!-- Test case 3: Multiple duplicate attributes with same values (should be fixed) -->
+    <div class="primary" data-test="value" class="primary" data-test="value">Button 3</div>
+
+    <!-- Test case 4: Mixed case attribute names with same values (should be fixed) -->
+    <div CLASS="btn" class="btn">Button 4</div>
+
+    <!-- Test case 5: Duplicate attributes with empty values (should be fixed) -->
+    <div data-empty="" data-empty="">Button 5</div>
+
+    <!-- Test case 6: No duplicates - should not trigger -->
+    <div class="btn" id="unique">Button 6</div>
+
+    <!-- Test case 7: Self-closing tag with duplicates -->
+    <input type="text" name="test" type="text" />
+
+    <!-- Test case 8: Multiple spaces around duplicate attributes -->
+    <div   class="btn"   class="btn"   >Button 8</div>
+  </body>
+</html>
