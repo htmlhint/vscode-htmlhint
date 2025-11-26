@@ -5,6 +5,7 @@ All notable changes to the "vscode-htmlhint" extension will be documented in thi
 ### v1.14.0 (2025-11-26)
 
 - Add autofix for the `attr-no-duplication` rule
+- Add autofix for the `form-method-require` rule
 
 ### v1.13.0 (2025-11-25)
 

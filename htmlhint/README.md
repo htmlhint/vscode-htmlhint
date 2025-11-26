@@ -35,6 +35,7 @@ The extension provides automatic fixes for many common HTML issues. Currently su
 - **`button-type-require`** - Adds type attribute to buttons
 - **`doctype-first`** - Adds DOCTYPE declaration at the beginning
 - **`doctype-html5`** - Updates DOCTYPE to HTML5
+- **`form-method-require`** - Adds empty method attribute to forms
 - **`html-lang-require`** - Adds `lang` attribute to `<html>` tag
 - **`meta-charset-require`** - Adds charset meta tag
 - **`meta-description-require`** - Adds description meta tag
