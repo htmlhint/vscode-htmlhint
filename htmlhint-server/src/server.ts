@@ -1749,6 +1749,70 @@ function findClosingTag(
 }
 
 /**
+ * Robustly find tag boundaries around a given position
+ * Handles edge cases like attribute values containing < or > characters
+ */
+function findTagBoundaries(
+  text: string,
+  position: number,
+): { tagStart: number; tagEnd: number } | null {
+  // Start from the position and work backwards to find the opening <
+  let tagStart = -1;
+  let i = position;
+
+  // Look backwards for the start of a tag
+  while (i >= 0) {
+    if (text[i] === "<") {
+      // Found a potential tag start, now verify it's a real tag opening
+      // by checking if we can find a matching > that's not inside quotes
+      const tagEndResult = findTagEnd(text, i);
+      if (tagEndResult && tagEndResult.tagEnd >= position) {
+        // This tag contains our position
+        tagStart = i;
+        return { tagStart, tagEnd: tagEndResult.tagEnd };
+      }
+    }
+    i--;
+  }
+
+  return null;
+}
+
+/**
+ * Find the end of a tag starting at the given position, properly handling quotes
+ */
+function findTagEnd(text: string, tagStart: number): { tagEnd: number } | null {
+  if (text[tagStart] !== "<") {
+    return null;
+  }
+
+  let i = tagStart + 1;
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+
+  while (i < text.length) {
+    const char = text[i];
+
+    if (char === '"' && !inSingleQuote) {
+      inDoubleQuote = !inDoubleQuote;
+    } else if (char === "'" && !inDoubleQuote) {
+      inSingleQuote = !inSingleQuote;
+    } else if (char === ">" && !inSingleQuote && !inDoubleQuote) {
+      // Found the end of the tag
+      return { tagEnd: i };
+    } else if (char === "<" && !inSingleQuote && !inDoubleQuote) {
+      // Found another tag start before closing this one - invalid
+      return null;
+    }
+
+    i++;
+  }
+
+  // Reached end of text without finding tag end
+  return null;
+}
+
+/**
  * Create auto-fix action for attr-no-duplication rule
  * Only fixes duplicates where the attribute values are identical
  */
@@ -1761,7 +1825,9 @@ function createAttrNoDuplicationFix(
   );
 
   if (!diagnostic.data || diagnostic.data.ruleId !== "attr-no-duplication") {
-    trace(`[DEBUG] createAttrNoDuplicationFix: Invalid diagnostic data or ruleId`);
+    trace(
+      `[DEBUG] createAttrNoDuplicationFix: Invalid diagnostic data or ruleId`,
+    );
     return null;
   }
 
@@ -1779,15 +1845,14 @@ function createAttrNoDuplicationFix(
   // Look for the opening tag that contains the diagnostic position
   const diagnosticOffset = document.offsetAt(diagnostic.range.start);
 
-  // Find the tag boundaries around the diagnostic position
-  let tagStart = text.lastIndexOf('<', diagnosticOffset);
-  let tagEnd = text.indexOf('>', diagnosticOffset);
-
-  if (tagStart === -1 || tagEnd === -1 || tagStart >= tagEnd) {
+  // Use robust tag boundary detection
+  const tagBoundaries = findTagBoundaries(text, diagnosticOffset);
+  if (!tagBoundaries) {
     trace(`[DEBUG] createAttrNoDuplicationFix: Could not find tag boundaries`);
     return null;
   }
 
+  const { tagStart, tagEnd } = tagBoundaries;
   const tagContent = text.substring(tagStart, tagEnd + 1);
   trace(`[DEBUG] createAttrNoDuplicationFix: Found tag: ${tagContent}`);
 
@@ -1805,7 +1870,7 @@ function createAttrNoDuplicationFix(
   let match;
   while ((match = attrPattern.exec(tagContent)) !== null) {
     const name = match[1].toLowerCase();
-    const value = match[2] || match[3] || match[4] || '';
+    const value = match[2] || match[3] || match[4] || "";
     attributes.push({
       name,
       value,
@@ -1815,11 +1880,13 @@ function createAttrNoDuplicationFix(
     });
   }
 
-  trace(`[DEBUG] createAttrNoDuplicationFix: Found ${attributes.length} attributes`);
+  trace(
+    `[DEBUG] createAttrNoDuplicationFix: Found ${attributes.length} attributes`,
+  );
 
   // Find duplicate attributes with the same value
   const duplicatesToRemove: typeof attributes = [];
-  const seenAttributes = new Map<string, typeof attributes[0]>();
+  const seenAttributes = new Map<string, (typeof attributes)[0]>();
 
   for (const attr of attributes) {
     const existing = seenAttributes.get(attr.name);
@@ -1828,10 +1895,14 @@ function createAttrNoDuplicationFix(
       if (existing.value === attr.value) {
         // Values are the same, we can safely remove the duplicate
         duplicatesToRemove.push(attr);
-        trace(`[DEBUG] createAttrNoDuplicationFix: Found duplicate ${attr.name}="${attr.value}" to remove`);
+        trace(
+          `[DEBUG] createAttrNoDuplicationFix: Found duplicate ${attr.name}="${attr.value}" to remove`,
+        );
       } else {
         // Values are different, don't autofix
-        trace(`[DEBUG] createAttrNoDuplicationFix: Found duplicate ${attr.name} with different values: "${existing.value}" vs "${attr.value}" - not autofixing`);
+        trace(
+          `[DEBUG] createAttrNoDuplicationFix: Found duplicate ${attr.name} with different values: "${existing.value}" vs "${attr.value}" - not autofixing`,
+        );
         return null;
       }
     } else {
@@ -1873,10 +1944,12 @@ function createAttrNoDuplicationFix(
         start: document.positionAt(startPos),
         end: document.positionAt(endPos),
       },
-      newText: '',
+      newText: "",
     });
 
-    trace(`[DEBUG] createAttrNoDuplicationFix: Will remove "${text.substring(startPos, endPos)}"`);
+    trace(
+      `[DEBUG] createAttrNoDuplicationFix: Will remove "${text.substring(startPos, endPos)}"`,
+    );
   }
 
   if (edits.length === 0) {
@@ -1889,9 +1962,10 @@ function createAttrNoDuplicationFix(
     },
   };
 
-  const title = duplicatesToRemove.length === 1
-    ? `Remove duplicate ${duplicatesToRemove[0].name} attribute`
-    : `Remove ${duplicatesToRemove.length} duplicate attributes`;
+  const title =
+    duplicatesToRemove.length === 1
+      ? `Remove duplicate ${duplicatesToRemove[0].name} attribute`
+      : `Remove ${duplicatesToRemove.length} duplicate attributes`;
 
   return {
     title,
