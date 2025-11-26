@@ -2028,17 +2028,15 @@ function createFormMethodRequireFix(
   const existingAttrs = formMatch[2] || ""; // existing attributes
 
   // Calculate insertion position
+  const newText = ' method=""';
   let insertPosition: number;
-  let newText: string;
 
   if (existingAttrs.trim()) {
     // There are existing attributes, add method after them
     insertPosition = tagStart + beforeAttrs.length + existingAttrs.length;
-    newText = ' method=""';
   } else {
     // No existing attributes, add method right after "form"
     insertPosition = tagStart + beforeAttrs.length;
-    newText = ' method=""';
   }
 
   const edit: TextEdit = {
