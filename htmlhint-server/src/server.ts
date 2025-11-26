@@ -2026,7 +2026,6 @@ function createFormMethodRequireFix(
 
   const beforeAttrs = formMatch[1]; // "<form"
   const existingAttrs = formMatch[2] || ""; // existing attributes
-  const tagClose = formMatch[3]; // ">" or "/>"
 
   // Calculate insertion position
   let insertPosition: number;
