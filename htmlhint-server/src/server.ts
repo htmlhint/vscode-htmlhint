@@ -1832,15 +1832,6 @@ function createAttrNoDuplicationFix(
   }
 
   const text = document.getText();
-  const lines = text.split("\n");
-  const diagnosticLine = diagnostic.data.line - 1;
-  const line = lines[diagnosticLine];
-
-  if (!line) {
-    trace(`[DEBUG] createAttrNoDuplicationFix: Line not found`);
-    return null;
-  }
-
   // Find the tag containing the duplicate attributes
   // Look for the opening tag that contains the diagnostic position
   const diagnosticOffset = document.offsetAt(diagnostic.range.start);
