@@ -2,6 +2,7 @@ const js = require("@eslint/js");
 const tseslint = require("@typescript-eslint/eslint-plugin");
 const tsparser = require("@typescript-eslint/parser");
 const prettier = require("eslint-config-prettier");
+const globals = require("globals");
 
 module.exports = [
   {
@@ -29,15 +30,7 @@ module.exports = [
         sourceType: "module",
       },
       globals: {
-        console: "readonly",
-        process: "readonly",
-        Buffer: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-        global: "readonly",
-        module: "readonly",
-        require: "readonly",
-        exports: "readonly",
+        ...globals.node,
         NodeJS: "readonly",
       },
     },
@@ -73,15 +66,7 @@ module.exports = [
       ecmaVersion: "latest",
       sourceType: "commonjs",
       globals: {
-        console: "readonly",
-        process: "readonly",
-        Buffer: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-        global: "readonly",
-        module: "readonly",
-        require: "readonly",
-        exports: "readonly",
+        ...globals.node,
         NodeJS: "readonly",
       },
     },
