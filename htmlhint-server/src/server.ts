@@ -1030,6 +1030,96 @@ function createMetaDescriptionRequireFix(
 }
 
 /**
+ * Create auto-fix action for link-rel-canonical-require rule
+ */
+function createLinkRelCanonicalRequireFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  if (
+    !diagnostic.data ||
+    diagnostic.data.ruleId !== "link-rel-canonical-require"
+  ) {
+    return null;
+  }
+
+  const text = document.getText();
+  const headMatch = text.match(/<head(\s[^>]*)?>([\s\S]*?)<\/head>/i);
+
+  if (!headMatch) {
+    return null;
+  }
+
+  const headContent = headMatch[2];
+  const canonicalMatch = headContent.match(
+    /<link\s+rel\s*=\s*["']canonical["'][^>]*>/i,
+  );
+
+  if (canonicalMatch) {
+    return null; // Canonical link tag already exists
+  }
+
+  // Find a good position to insert canonical link tag (after meta tags if they exist, otherwise at the beginning of head)
+  const headStart = headMatch.index! + headMatch[0].indexOf(">") + 1;
+  const metaCharsetMatch = headContent.match(
+    /<meta\s+charset\s*=\s*["'][^"']*["'][^>]*>/i,
+  );
+  const metaViewportMatch = headContent.match(
+    /<meta\s+name\s*=\s*["']viewport["'][^>]*>/i,
+  );
+  const metaDescriptionMatch = headContent.match(
+    /<meta\s+name\s*=\s*["']description["'][^>]*>/i,
+  );
+
+  let insertPosition: number;
+  const shouldSelfClose = isRuleEnabledForDocument(document, "tag-self-close");
+  const canonicalSnippet =
+    '\n    <link rel="canonical" href=""' +
+    (shouldSelfClose ? " />" : ">");
+
+  if (metaDescriptionMatch) {
+    // Insert after description meta tag
+    const metaDescriptionEnd =
+      headStart + metaDescriptionMatch.index! + metaDescriptionMatch[0].length;
+    insertPosition = metaDescriptionEnd;
+  } else if (metaViewportMatch) {
+    // Insert after viewport meta tag
+    const metaViewportEnd =
+      headStart + metaViewportMatch.index! + metaViewportMatch[0].length;
+    insertPosition = metaViewportEnd;
+  } else if (metaCharsetMatch) {
+    // Insert after charset meta tag
+    const metaCharsetEnd =
+      headStart + metaCharsetMatch.index! + metaCharsetMatch[0].length;
+    insertPosition = metaCharsetEnd;
+  } else {
+    // Insert at the beginning of head
+    insertPosition = headStart;
+  }
+
+  const edit: TextEdit = {
+    range: {
+      start: document.positionAt(insertPosition),
+      end: document.positionAt(insertPosition),
+    },
+    newText: canonicalSnippet,
+  };
+
+  const workspaceEdit: WorkspaceEdit = {
+    changes: {
+      [document.uri]: [edit],
+    },
+  };
+
+  return {
+    title: 'Add <link rel="canonical"> tag',
+    kind: CodeActionKind.QuickFix,
+    edit: workspaceEdit,
+    isPreferred: true,
+  };
+}
+
+/**
  * Create auto-fix action for alt-require rule
  */
 function createAltRequireFix(
@@ -2431,6 +2521,10 @@ async function createAutoFixes(
         case "meta-description-require":
           trace(`[DEBUG] Calling createMetaDescriptionRequireFix`);
           fix = await createMetaDescriptionRequireFix(document, diagnostic);
+          break;
+        case "link-rel-canonical-require":
+          trace(`[DEBUG] Calling createLinkRelCanonicalRequireFix`);
+          fix = await createLinkRelCanonicalRequireFix(document, diagnostic);
           break;
         case "alt-require":
           trace(`[DEBUG] Calling createAltRequireFix`);
