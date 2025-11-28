@@ -1074,8 +1074,7 @@ function createLinkRelCanonicalRequireFix(
   let insertPosition: number;
   const shouldSelfClose = isRuleEnabledForDocument(document, "tag-self-close");
   const canonicalSnippet =
-    '\n    <link rel="canonical" href=""' +
-    (shouldSelfClose ? " />" : ">");
+    '\n    <link rel="canonical" href=""' + (shouldSelfClose ? " />" : ">");
 
   if (metaDescriptionMatch) {
     // Insert after description meta tag
