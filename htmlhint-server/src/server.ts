@@ -262,6 +262,67 @@ function loadConfigurationFile(configFile: string): HtmlHintConfig | null {
   return ruleset;
 }
 
+function isHtmlHintRuleEnabled(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return false;
+    }
+    return isHtmlHintRuleEnabled(value[0]);
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return value !== 0;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized !== "false" && normalized !== "0" && normalized !== "";
+  }
+
+  if (typeof value === "object") {
+    return true;
+  }
+
+  return false;
+}
+
+function isRuleEnabledForDocument(
+  document: TextDocument,
+  ruleId: string,
+): boolean {
+  try {
+    const parsedUri = URI.parse(document.uri);
+
+    if (parsedUri.scheme !== "file") {
+      trace(
+        `[DEBUG] isRuleEnabledForDocument: Non-file scheme for ${document.uri}, rule ${ruleId} treated as disabled`,
+      );
+      return false;
+    }
+
+    const config = getConfiguration(parsedUri.fsPath);
+    const ruleValue = (config as Record<string, unknown>)[ruleId];
+    const enabled = isHtmlHintRuleEnabled(ruleValue);
+    trace(
+      `[DEBUG] isRuleEnabledForDocument: Rule ${ruleId} enabled=${enabled} for ${document.uri}`,
+    );
+    return enabled;
+  } catch (error) {
+    trace(
+      `[DEBUG] isRuleEnabledForDocument: Failed to determine rule ${ruleId} for ${document.uri}: ${error}`,
+    );
+    return false;
+  }
+}
+
 function isErrorWithMessage(err: unknown): err is { message: string } {
   return (
     typeof err === "object" &&
@@ -789,7 +850,9 @@ function createMetaCharsetRequireFix(
   // Insert charset meta tag at the beginning of head (right after <head>)
   const headStart = headMatch.index! + headMatch[0].indexOf(">") + 1;
   const insertPosition = headStart;
-  const newText = '\n    <meta charset="UTF-8">';
+  const shouldSelfClose = isRuleEnabledForDocument(document, "tag-self-close");
+  const newText =
+    '\n    <meta charset="UTF-8"' + (shouldSelfClose ? " />" : ">");
 
   const edit: TextEdit = {
     range: {
@@ -846,19 +909,20 @@ function createMetaViewportRequireFix(
     /<meta\s+charset\s*=\s*["'][^"']*["'][^>]*>/i,
   );
 
+  const shouldSelfClose = isRuleEnabledForDocument(document, "tag-self-close");
+  trace(
+    `[DEBUG] createMetaViewportRequireFix: tag-self-close enabled=${shouldSelfClose}`,
+  );
+  const viewportSnippet = `\n    <meta name="viewport" content="width=device-width, initial-scale=1.0"${shouldSelfClose ? " />" : ">"}`;
+
   let insertPosition: number;
-  let newText: string;
 
   if (metaCharsetMatch) {
     const metaCharsetEnd =
       headStart + metaCharsetMatch.index! + metaCharsetMatch[0].length;
     insertPosition = metaCharsetEnd;
-    newText =
-      '\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">';
   } else {
     insertPosition = headStart;
-    newText =
-      '\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">';
   }
 
   const edit: TextEdit = {
@@ -866,7 +930,7 @@ function createMetaViewportRequireFix(
       start: document.positionAt(insertPosition),
       end: document.positionAt(insertPosition),
     },
-    newText: newText,
+    newText: viewportSnippet,
   };
 
   const workspaceEdit: WorkspaceEdit = {
@@ -923,24 +987,24 @@ function createMetaDescriptionRequireFix(
   );
 
   let insertPosition: number;
-  let newText: string;
+  const shouldSelfClose = isRuleEnabledForDocument(document, "tag-self-close");
+  const descriptionSnippet =
+    '\n    <meta name="description" content=""' +
+    (shouldSelfClose ? " />" : ">");
 
   if (metaViewportMatch) {
     // Insert after viewport meta tag
     const metaViewportEnd =
       headStart + metaViewportMatch.index! + metaViewportMatch[0].length;
     insertPosition = metaViewportEnd;
-    newText = '\n    <meta name="description" content="">';
   } else if (metaCharsetMatch) {
     // Insert after charset meta tag
     const metaCharsetEnd =
       headStart + metaCharsetMatch.index! + metaCharsetMatch[0].length;
     insertPosition = metaCharsetEnd;
-    newText = '\n    <meta name="description" content="">';
   } else {
     // Insert at the beginning of head
     insertPosition = headStart;
-    newText = '\n    <meta name="description" content="">';
   }
 
   const edit: TextEdit = {
@@ -948,7 +1012,7 @@ function createMetaDescriptionRequireFix(
       start: document.positionAt(insertPosition),
       end: document.positionAt(insertPosition),
     },
-    newText: newText,
+    newText: descriptionSnippet,
   };
 
   const workspaceEdit: WorkspaceEdit = {
@@ -1977,7 +2041,10 @@ function createAttrValueNoDuplicationFix(
     `[DEBUG] createAttrValueNoDuplicationFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
   );
 
-  if (!diagnostic.data || diagnostic.data.ruleId !== "attr-value-no-duplication") {
+  if (
+    !diagnostic.data ||
+    diagnostic.data.ruleId !== "attr-value-no-duplication"
+  ) {
     trace(
       `[DEBUG] createAttrValueNoDuplicationFix: Invalid diagnostic data or ruleId`,
     );
@@ -1990,7 +2057,9 @@ function createAttrValueNoDuplicationFix(
   // Use robust tag boundary detection
   const tagBoundaries = findTagBoundaries(text, diagnosticOffset);
   if (!tagBoundaries) {
-    trace(`[DEBUG] createAttrValueNoDuplicationFix: Could not find tag boundaries`);
+    trace(
+      `[DEBUG] createAttrValueNoDuplicationFix: Could not find tag boundaries`,
+    );
     return null;
   }
 
@@ -2017,8 +2086,9 @@ function createAttrValueNoDuplicationFix(
 
       if (values.length !== uniqueValues.length) {
         // Found duplicates, create an edit to fix them
-        const newAttrValue = uniqueValues.join(' ');
-        const quote = match[2] !== undefined ? '"' : match[3] !== undefined ? "'" : '';
+        const newAttrValue = uniqueValues.join(" ");
+        const quote =
+          match[2] !== undefined ? '"' : match[3] !== undefined ? "'" : "";
         const newFullMatch = quote
           ? `${attrName}=${quote}${newAttrValue}${quote}`
           : `${attrName}=${newAttrValue}`;
