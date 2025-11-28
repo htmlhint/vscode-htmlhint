@@ -2231,6 +2231,142 @@ function createFormMethodRequireFix(
 }
 
 /**
+ * Create auto-fix action for empty-tag-not-self-closed rule
+ *
+ * This fixes void HTML elements by converting them to proper self-closing format.
+ * Void elements should be self-closing and never have closing tags.
+ * Only applies to void HTML elements (br, img, hr, input, etc.).
+ *
+ * Example transformations:
+ * - <br> → <br/>
+ * - <img src="test.jpg"> → <img src="test.jpg"/>
+ * - <hr> → <hr/>
+ */
+function createEmptyTagNotSelfClosedFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  trace(
+    `[DEBUG] createEmptyTagNotSelfClosedFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
+  );
+
+  if (
+    !diagnostic.data ||
+    diagnostic.data.ruleId !== "empty-tag-not-self-closed"
+  ) {
+    trace(
+      `[DEBUG] createEmptyTagNotSelfClosedFix: Invalid diagnostic data or ruleId: ${JSON.stringify(diagnostic.data)}`,
+    );
+    return null;
+  }
+
+  const text = document.getText();
+  const diagnosticOffset = document.offsetAt(diagnostic.range.start);
+
+  // List of void elements that should be self-closing
+  const voidElements = [
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "source",
+    "track",
+    "wbr",
+  ];
+
+  // Find the tag boundaries around the diagnostic position
+  const tagBoundaries = findTagBoundaries(text, diagnosticOffset);
+  if (!tagBoundaries) {
+    trace(
+      `[DEBUG] createEmptyTagNotSelfClosedFix: Could not find tag boundaries`,
+    );
+    return null;
+  }
+
+  const { tagStart, tagEnd } = tagBoundaries;
+
+  // Extract the content around the diagnostic position to find void elements
+  const searchStart = Math.max(0, tagStart - 50);
+  const searchEnd = Math.min(text.length, tagEnd + 50);
+  const searchText = text.substring(searchStart, searchEnd);
+
+  // Pattern to match void elements that are not self-closing: <tagname> or <tagname attributes>
+  const voidElementPattern = /<(\w+)(\s[^>]*?)?\s*>/gi;
+  let match;
+
+  while ((match = voidElementPattern.exec(searchText)) !== null) {
+    const matchStart = searchStart + match.index;
+    const matchEnd = matchStart + match[0].length;
+    const tagName = match[1].toLowerCase();
+    const attributes = match[2] || "";
+    const fullMatch = match[0];
+
+    // Skip if already self-closing
+    if (fullMatch.endsWith("/>")) {
+      continue;
+    }
+
+    // Check if this match contains our diagnostic position
+    if (matchStart <= diagnosticOffset && diagnosticOffset <= matchEnd) {
+      // Verify this is a void element
+      if (!voidElements.includes(tagName)) {
+        trace(
+          `[DEBUG] createEmptyTagNotSelfClosedFix: ${tagName} is not a void element`,
+        );
+        return null;
+      }
+
+      trace(
+        `[DEBUG] createEmptyTagNotSelfClosedFix: Found non-self-closing ${tagName} tag at position ${matchStart}-${matchEnd}`,
+      );
+
+      // Create the self-closing replacement
+      const selfClosingTag = attributes.trim()
+        ? `<${tagName}${attributes} />`
+        : `<${tagName} />`;
+
+      const edit: TextEdit = {
+        range: {
+          start: document.positionAt(matchStart),
+          end: document.positionAt(matchEnd),
+        },
+        newText: selfClosingTag,
+      };
+
+      trace(
+        `[DEBUG] createEmptyTagNotSelfClosedFix: Will replace "${fullMatch}" with "${selfClosingTag}"`,
+      );
+
+      const action = CodeAction.create(
+        `Convert ${tagName} tag to self-closing`,
+        {
+          changes: {
+            [document.uri]: [edit],
+          },
+        },
+        CodeActionKind.QuickFix,
+      );
+
+      action.diagnostics = [diagnostic];
+      action.isPreferred = true;
+
+      return action;
+    }
+  }
+
+  trace(
+    `[DEBUG] createEmptyTagNotSelfClosedFix: No matching empty tag pair found`,
+  );
+  return null;
+}
+
+/**
  * Create auto-fix actions for supported rules
  */
 async function createAutoFixes(
@@ -2335,6 +2471,10 @@ async function createAutoFixes(
         case "form-method-require":
           trace(`[DEBUG] Calling createFormMethodRequireFix`);
           fix = createFormMethodRequireFix(document, diagnostic);
+          break;
+        case "empty-tag-not-self-closed":
+          trace(`[DEBUG] Calling createEmptyTagNotSelfClosedFix`);
+          fix = createEmptyTagNotSelfClosedFix(document, diagnostic);
           break;
         default:
           trace(`[DEBUG] No autofix function found for rule: ${ruleId}`);

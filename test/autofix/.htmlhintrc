@@ -9,6 +9,7 @@
   "button-type-require": true,
   "doctype-first": true,
   "doctype-html5": true,
+  "empty-tag-not-self-closed": true,
   "html-lang-require": true,
   "id-unique": true,
   "meta-charset-require": true,

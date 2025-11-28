@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Empty Tag Not Self-Closed Test" />
+    <title>Empty Tag Not Self-Closed Test</title>
+  </head>
+  <body>
+    <!-- Test case 1: br tag (should be converted to self-closing) -->
+    <br>
+
+    <!-- Test case 2: img tag (should be converted to self-closing) -->
+    <img src="test.jpg" alt="Test">
+
+    <!-- Test case 3: hr tag (should be converted to self-closing) -->
+    <hr>
+
+    <!-- Test case 4: input tag (should be converted to self-closing) -->
+    <input type="text">
+
+    <!-- Test case 5: meta tag (should be converted to self-closing) -->
+    <meta name="test" content="test">
+
+    <!-- Test case 6: link tag (should be converted to self-closing) -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Test case 7: area tag (should be converted to self-closing) -->
+    <area shape="rect" coords="0,0,100,100" href="#">
+
+    <!-- Test case 8: base tag (should be converted to self-closing) -->
+    <base href="https://example.com">
+
+    <!-- Test case 9: col tag (should be converted to self-closing) -->
+    <col span="2">
+
+    <!-- Test case 10: embed tag (should be converted to self-closing) -->
+    <embed src="test.swf" type="application/x-shockwave-flash">
+
+    <!-- Test case 11: source tag (should be converted to self-closing) -->
+    <source src="test.mp4" type="video/mp4">
+
+    <!-- Test case 12: track tag (should be converted to self-closing) -->
+    <track src="subtitles.vtt" kind="subtitles" srclang="en">
+
+    <!-- Test case 13: wbr tag (should be converted to self-closing) -->
+    <wbr>
+
+    <!-- Test case 14: Void elements with trailing whitespace (should be converted to self-closing) -->
+    <hr >
+    <input type="text" >
+    <br   >
+    <img src="test3.jpg" alt="Test 3"  >
+
+    <!-- Test case 15: Already self-closing tags - should not trigger -->
+    <br />
+    <img src="test2.jpg" alt="Test 2" />
+    <hr />
+
+    <!-- Test case 16: Non-void elements with content - should not trigger -->
+    <div>Content</div>
+    <p>Paragraph content</p>
+
+    <!-- Test case 17: Empty non-void elements - should not trigger -->
+    <div></div>
+    <p></p>
+  </body>
+</html>
