@@ -2,6 +2,10 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.15.0 (2025-11-27)
+
+- Smarter autofix for rules which accommodates for `tag-self-close` rule.
+
 ### v1.14.0 (2025-11-26)
 
 - Add autofix for the `attr-no-duplication` rule
