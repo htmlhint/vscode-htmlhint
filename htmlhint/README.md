@@ -39,6 +39,7 @@ The extension provides automatic fixes for many common HTML issues. Currently su
 - **`empty-tag-not-self-closed`** - Converts void elements to self-closing format (e.g., `<br>` → `<br/>`)
 - **`form-method-require`** - Adds empty method attribute to forms
 - **`html-lang-require`** - Adds `lang` attribute to `<html>` tag
+- **`link-rel-canonical-require`** - Adds canonical link tag
 - **`meta-charset-require`** - Adds charset meta tag
 - **`meta-description-require`** - Adds description meta tag
 - **`meta-viewport-require`** - Adds viewport meta tag
