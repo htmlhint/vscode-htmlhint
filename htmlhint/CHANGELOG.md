@@ -2,7 +2,7 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
-### v1.15.0 (2025-11-27)
+### v1.15.0 (TBD)
 
 - Add autofix for the `empty-tag-not-self-closed` rule
 - Add autofix for the `link-rel-canonical-require` rule
