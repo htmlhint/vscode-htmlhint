@@ -1052,7 +1052,7 @@ function createLinkRelCanonicalRequireFix(
 
   const headContent = headMatch[2];
   const canonicalMatch = headContent.match(
-    /<link\s+rel\s*=\s*["']canonical["'][^>]*>/i,
+    /<link\s+[^>]*rel\s*=\s*["']canonical["'][^>]*>/i,
   );
 
   if (canonicalMatch) {
