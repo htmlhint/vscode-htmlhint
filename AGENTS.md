@@ -8,6 +8,15 @@
 - Never downgrade dependencies.
 - Newly added version/features for the Extension Changelog go at the top.
 - As a general rule: some rules, attributes, lists should be in alphabetical order.
+- Format everything (except HTML) with Prettier.
+
+## Markdown Code Style
+
+- Format with Prettier.
+
+## TypeScript Code Style
+
+- Format with Prettier.
 
 ## Communication (MANDATORY)
 
@@ -28,4 +37,4 @@
 
 - No emojis in code or documentation.
 - Only implement what's requested.
-- Preserve existing structures - Don't remove unrelated code
+- Preserve existing structures - Don't remove unrelated code.
