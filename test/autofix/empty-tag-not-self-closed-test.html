@@ -46,16 +46,22 @@
     <!-- Test case 13: wbr tag (should be converted to self-closing) -->
     <wbr>
 
-    <!-- Test case 14: Already self-closing tags - should not trigger -->
+    <!-- Test case 14: Void elements with trailing whitespace (should be converted to self-closing) -->
+    <hr >
+    <input type="text" >
+    <br   >
+    <img src="test3.jpg" alt="Test 3"  >
+
+    <!-- Test case 15: Already self-closing tags - should not trigger -->
     <br />
     <img src="test2.jpg" alt="Test 2" />
     <hr />
 
-    <!-- Test case 15: Non-void elements with content - should not trigger -->
+    <!-- Test case 16: Non-void elements with content - should not trigger -->
     <div>Content</div>
     <p>Paragraph content</p>
 
-    <!-- Test case 16: Empty non-void elements - should not trigger -->
+    <!-- Test case 17: Empty non-void elements - should not trigger -->
     <div></div>
     <p></p>
   </body>
