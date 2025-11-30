@@ -18,7 +18,7 @@
     "build": "npm run compile",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prettier": "prettier --write \"**/*.{js,md,ts,yml}\"",
+    "prettier": "prettier --write \"**/*.{js,json,md,ts,yml}\"",
     "spellcheck": "npx cspell \"**/*.{html,js,json,md,ts,yml}\"",
     "postinstall": "cd htmlhint && npm i && cd ../htmlhint-server && npm i",
     "compile": "cd htmlhint-server && npm run compile && cd ../htmlhint && npm run compile",
@@ -43,7 +43,7 @@
     "glob": "^13.0.0",
     "globals": "^16.5.0",
     "mocha": "^11.7.5",
-    "prettier": "3.7.1",
+    "prettier": "3.7.3",
     "ts-node": "^10.9.2",
     "typescript": "5.6.3"
   },

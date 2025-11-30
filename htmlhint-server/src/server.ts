@@ -752,7 +752,7 @@ function createDoctypeFirstFix(
 
   // Insert DOCTYPE at the beginning of the document
   const insertPosition = document.positionAt(0);
-  const newText = "<!DOCTYPE html>\n";
+  const newText = "<!doctype html>\n";
 
   const edit: TextEdit = {
     range: {
@@ -803,7 +803,7 @@ function createDoctypeHtml5Fix(
       start: document.positionAt(doctypeStart),
       end: document.positionAt(doctypeEnd),
     },
-    newText: "<!DOCTYPE html>",
+    newText: "<!doctype html>",
   };
 
   const workspaceEdit: WorkspaceEdit = {
