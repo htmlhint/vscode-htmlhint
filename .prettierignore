@@ -1,3 +1,4 @@
+.cspell.json
 .vscode-test/
 htmlhint/out/
 htmlhint/server/
