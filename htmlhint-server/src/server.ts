@@ -1909,7 +1909,6 @@ function findTagBoundaries(
   position: number,
 ): { tagStart: number; tagEnd: number } | null {
   // Start from the position and work backwards to find the opening <
-  let tagStart = -1;
   let i = position;
 
   // Look backwards for the start of a tag
@@ -1920,8 +1919,7 @@ function findTagBoundaries(
       const tagEndResult = findTagEnd(text, i);
       if (tagEndResult && tagEndResult.tagEnd >= position) {
         // This tag contains our position
-        tagStart = i;
-        return { tagStart, tagEnd: tagEndResult.tagEnd };
+        return { tagStart: i, tagEnd: tagEndResult.tagEnd };
       }
     }
     i--;
@@ -2694,7 +2692,7 @@ function doValidate(connection: Connection, document: TextDocument): void {
   } catch (err) {
     trace(`[DEBUG] doValidate error: ${err}`);
     if (isErrorWithMessage(err)) {
-      throw new Error(err.message);
+      throw new Error(err.message, { cause: err });
     }
     throw err;
   }
