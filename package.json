@@ -46,10 +46,10 @@
     "mocha": "^11.7.5",
     "prettier": "3.8.1",
     "ts-node": "^10.9.2",
-    "typescript": "5.6.3"
+    "typescript": "5.8.3"
   },
   "engines": {
-    "node": ">= 22.22.2"
+    "node": ">= 22.22"
   },
   "volta": {
     "node": "22.22.2"
