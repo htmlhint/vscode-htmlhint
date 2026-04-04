@@ -4,6 +4,10 @@ import * as path from "path";
 import { runTests } from "@vscode/test-electron";
 
 async function main() {
+  const tempRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "vscode-htmlhint-tests-"),
+  );
+
   try {
     // The folder containing the Extension Manifest package.json
     // Passed to `--extensionDevelopmentPath`
@@ -12,9 +16,6 @@ async function main() {
     // The path to the test runner
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, "./suite/index");
-    const tempRoot = fs.mkdtempSync(
-      path.join(os.tmpdir(), "vscode-htmlhint-tests-"),
-    );
     const extensionTestsEnvPath = path.join(tempRoot, "extensions");
     const userDataDir = path.join(tempRoot, "user-data");
     const extensionPackageJsonPath = path.resolve(
@@ -50,6 +51,8 @@ async function main() {
   } catch (err) {
     console.error("Failed to run tests", err);
     process.exit(1);
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
   }
 }
 
