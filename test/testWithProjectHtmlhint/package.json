@@ -1,13 +1,14 @@
 {
   "name": "test-with-project-htmlhint",
   "version": "0.3.0",
+  "private": true,
   "description": "test project",
+  "license": "MIT",
+  "author": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "MIT",
   "devDependencies": {
     "htmlhint": "0.9.10"
   }
