@@ -4,6 +4,13 @@ const tsparser = require("@typescript-eslint/parser");
 const prettier = require("eslint-config-prettier");
 const globals = require("globals");
 
+const strictRules = {
+  curly: "error",
+  eqeqeq: "error",
+  "no-var": "error",
+  "prefer-const": "error",
+};
+
 module.exports = [
   {
     ignores: [
@@ -39,10 +46,9 @@ module.exports = [
     },
     rules: {
       ...tseslint.configs.recommended.rules,
+      ...strictRules,
       "no-console": "error",
       "no-empty": "off",
-      "no-var": "off",
-      "prefer-const": "off",
       "@typescript-eslint/explicit-module-boundary-types": "off",
       "@typescript-eslint/no-empty-interface": "off",
       "@typescript-eslint/no-explicit-any": "off",
@@ -71,10 +77,9 @@ module.exports = [
       },
     },
     rules: {
+      ...strictRules,
       "no-console": "error",
       "no-empty": "off",
-      "no-var": "off",
-      "prefer-const": "off",
       "no-unused-vars": [
         "error",
         {
@@ -83,6 +88,15 @@ module.exports = [
           args: "after-used",
         },
       ],
+    },
+  },
+  {
+    files: ["htmlhint/server/server.js"],
+    rules: {
+      curly: "off",
+      eqeqeq: "off",
+      "no-var": "off",
+      "prefer-const": "off",
     },
   },
   prettier,
