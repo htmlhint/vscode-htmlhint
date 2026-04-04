@@ -43,10 +43,10 @@ import ignore from "ignore";
 import stripJsonComments from "strip-json-comments";
 
 // Cache for gitignore patterns to avoid repeatedly parsing .gitignore files
-let gitignoreCache: Map<string, ReturnType<typeof ignore>> = new Map();
+const gitignoreCache: Map<string, ReturnType<typeof ignore>> = new Map();
 
 // Cache for workspace root detection to avoid repeated filesystem calls
-let workspaceRootCache: Map<string, string | null> = new Map();
+const workspaceRootCache: Map<string, string | null> = new Map();
 
 interface HtmlHintSettings {
   configFile: string;
@@ -75,7 +75,7 @@ let linter: {
  * A value of null means a .htmlhintrc object didn't exist at the given path.
  * A value of undefined means the file at this path hasn't been loaded yet, or should be reloaded because it changed
  */
-let htmlhintrcOptions: Record<string, HtmlHintConfig | null | undefined> = {};
+const htmlhintrcOptions: Record<string, HtmlHintConfig | null | undefined> = {};
 
 /**
  * Given an htmlhint.Error type return a VS Code server Diagnostic object
@@ -219,7 +219,7 @@ function findConfigForHtmlFile(base: string): HtmlHintConfig | undefined {
       }
 
       // Move to parent directory
-      let parentBase = path.dirname(base);
+      const parentBase = path.dirname(base);
       if (parentBase === base) {
         // Reached root directory, stop searching
         break;
@@ -246,7 +246,7 @@ function loadConfigurationFile(configFile: string): HtmlHintConfig | null {
   if (fs.existsSync(configFile)) {
     trace(`[HTMLHint Debug] Config file exists, reading: ${configFile}`);
     try {
-      let config = fs.readFileSync(configFile, "utf8");
+      const config = fs.readFileSync(configFile, "utf8");
       ruleset = JSON.parse(stripJsonComments(config));
       trace(
         `[HTMLHint Debug] Successfully parsed config: ${JSON.stringify(ruleset)}`,
@@ -385,8 +385,8 @@ function validateTextDocument(
   }
 }
 
-let connection: Connection = createConnection();
-let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+const connection: Connection = createConnection();
+const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 documents.listen(connection);
 
 function trace(message: string, verbose?: string): void {
@@ -2596,7 +2596,7 @@ connection.onInitialize(
       htmlhint.HTMLHint ||
       htmlhint) as typeof linter;
 
-    let result: InitializeResult = {
+    const result: InitializeResult = {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
         codeActionProvider: {
@@ -2651,16 +2651,16 @@ function doValidate(connection: Connection, document: TextDocument): void {
       return;
     }
 
-    let uri = document.uri;
+    const uri = document.uri;
     // Convert URI to file path using vscode-uri
-    let fsPath = URI.parse(uri).fsPath;
+    const fsPath = URI.parse(uri).fsPath;
 
     trace(`[DEBUG] doValidate called for: ${fsPath}`);
 
     // Check if file should be ignored based on .gitignore
     if (settings.htmlhint.ignoreGitignore) {
       // Find workspace root by looking for .git directory or .gitignore file
-      let workspaceRoot = findWorkspaceRoot(fsPath);
+      const workspaceRoot = findWorkspaceRoot(fsPath);
       if (workspaceRoot && shouldIgnoreFile(fsPath, workspaceRoot)) {
         trace(
           `[DEBUG] File ${fsPath} is ignored by .gitignore, skipping validation`,
@@ -2671,15 +2671,15 @@ function doValidate(connection: Connection, document: TextDocument): void {
       }
     }
 
-    let contents = document.getText();
+    const contents = document.getText();
 
-    let config = getConfiguration(fsPath);
+    const config = getConfiguration(fsPath);
     trace(`[DEBUG] Loaded config: ${JSON.stringify(config)}`);
 
-    let errors: htmlhint.Error[] = linter.verify(contents, config);
+    const errors: htmlhint.Error[] = linter.verify(contents, config);
     trace(`[DEBUG] HTMLHint found ${errors.length} errors`);
 
-    let diagnostics: Diagnostic[] = [];
+    const diagnostics: Diagnostic[] = [];
     if (errors.length > 0) {
       errors.forEach((each) => {
         trace(`[DEBUG] Error found: ${each.rule.id} - ${each.message}`);
@@ -2766,8 +2766,8 @@ connection.onDidChangeWatchedFiles((params) => {
 
   for (let i = 0; i < params.changes.length; i++) {
     // Convert URI to file path using vscode-uri
-    let uri = params.changes[i].uri;
-    let fsPath = URI.parse(uri).fsPath;
+    const uri = params.changes[i].uri;
+    const fsPath = URI.parse(uri).fsPath;
 
     trace(`[DEBUG] Processing config file change: ${fsPath}`);
     trace(`[DEBUG] Change type: ${params.changes[i].type}`);

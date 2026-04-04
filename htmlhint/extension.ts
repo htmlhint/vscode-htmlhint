@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(outputChannel);
 
   // Register the create config command
-  let createConfigCommand = vscode.commands.registerCommand(
+  const createConfigCommand = vscode.commands.registerCommand(
     "htmlhint.createConfig",
     createHtmlHintConfig,
   );
@@ -27,12 +27,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   // We need to go one level up since an extension compile the js code into
   // the output folder.
-  let serverModulePath = path.join(__dirname, "..", "server", "server.js");
-  let debugOptions = {
+  const serverModulePath = path.join(__dirname, "..", "server", "server.js");
+  const debugOptions = {
     execArgv: ["--nolazy", "--inspect=6010"],
     cwd: process.cwd(),
   };
-  let serverOptions: ServerOptions = {
+  const serverOptions: ServerOptions = {
     run: { module: serverModulePath, transport: TransportKind.ipc },
     debug: {
       module: serverModulePath,
@@ -42,15 +42,15 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // Get file types to lint from user settings
-  let config = vscode.workspace.getConfiguration("htmlhint");
-  let languages: string[] = config.get("documentSelector") || ["html", "htm"];
-  let documentSelector = languages.map((language) => ({
+  const config = vscode.workspace.getConfiguration("htmlhint");
+  const languages: string[] = config.get("documentSelector") || ["html", "htm"];
+  const documentSelector = languages.map((language) => ({
     language,
     scheme: "file",
   }));
 
   // Set options
-  let clientOptions: LanguageClientOptions = {
+  const clientOptions: LanguageClientOptions = {
     documentSelector,
     diagnosticCollectionName: "htmlhint",
     synchronize: {
