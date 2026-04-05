@@ -31,30 +31,19 @@ suite("HTMLHint Test Suite", () => {
         __dirname,
         "../../../test/testConfigFile/.htmlhintrc",
       );
-      let configExists = false;
       try {
         await vscode.workspace.fs.stat(vscode.Uri.file(testConfigPath));
-        configExists = true;
       } catch {
-        configExists = false;
+        assert.fail(".htmlhintrc should exist in test config directory");
       }
-      assert.strictEqual(
-        configExists,
-        true,
-        ".htmlhintrc should exist in test config directory",
-      );
       return;
     }
 
     const configPath = path.join(workspaceFolder.uri.fsPath, ".htmlhintrc");
-    let configExists = false;
     try {
       await vscode.workspace.fs.stat(vscode.Uri.file(configPath));
-      configExists = true;
     } catch {
-      configExists = false;
+      assert.fail(".htmlhintrc should exist");
     }
-
-    assert.strictEqual(configExists, true, ".htmlhintrc should exist");
   });
 });
