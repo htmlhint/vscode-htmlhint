@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   run:
-    name: Node
+    name: Node 22 on ubuntu-latest
     runs-on: ubuntu-latest
 
     steps:
