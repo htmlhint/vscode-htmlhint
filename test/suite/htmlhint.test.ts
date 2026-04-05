@@ -33,8 +33,12 @@ suite("HTMLHint Test Suite", () => {
       );
       try {
         await vscode.workspace.fs.stat(vscode.Uri.file(testConfigPath));
-      } catch {
-        assert.fail(".htmlhintrc should exist in test config directory");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        assert.fail(
+          `.htmlhintrc should exist in test config directory: ${testConfigPath} (${message})`,
+        );
       }
       return;
     }
@@ -42,8 +46,9 @@ suite("HTMLHint Test Suite", () => {
     const configPath = path.join(workspaceFolder.uri.fsPath, ".htmlhintrc");
     try {
       await vscode.workspace.fs.stat(vscode.Uri.file(configPath));
-    } catch {
-      assert.fail(".htmlhintrc should exist");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      assert.fail(`.htmlhintrc should exist: ${configPath} (${message})`);
     }
   });
 });
