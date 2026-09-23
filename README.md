@@ -4,13 +4,13 @@ VS Code extension to support HTMLHint, an HTML linter.
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=HTMLHint.vscode-htmlhint">
-    <img alt="Visual Studio Marketplace Version" src="https://img.shields.io/visual-studio-marketplace/v/HTMLHint.vscode-htmlhint"></a>
+    <img alt="Visual Studio Marketplace Version" src="https://vsmarketplacebadges.dev/version/HTMLHint.vscode-htmlhint.svg"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=HTMLHint.vscode-htmlhint">
-    <img alt="VS Code Marketplace Downloads" src="https://img.shields.io/visual-studio-marketplace/d/HTMLHint.vscode-htmlhint"></a>
+    <img alt="VS Code Marketplace Downloads" src="https://vsmarketplacebadges.dev/downloads-short/HTMLHint.vscode-htmlhint.svg"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=HTMLHint.vscode-htmlhint">
-    <img alt="VS Code Marketplace Installs" src="https://img.shields.io/visual-studio-marketplace/i/HTMLHint.vscode-htmlhint"></a>
+    <img alt="VS Code Marketplace Installs" src="https://vsmarketplacebadges.dev/installs-short/HTMLHint.vscode-htmlhint.svg"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=HTMLHint.vscode-htmlhint">
-    <img alt="VS Code Marketplace Ratings" src="https://img.shields.io/visual-studio-marketplace/r/HTMLHint.vscode-htmlhint"></a>
+    <img alt="VS Code Marketplace Ratings" src="https://vsmarketplacebadges.dev/rating-short/HTMLHint.vscode-htmlhint.svg"></a>
 </p>
 
 ## Installation
