@@ -2,6 +2,16 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
+### v1.17.0 (2026-09-23)
+
+- Update HTMLHint to v1.9.2
+- Bundle the extension and language server with esbuild for faster activation and a smaller package
+- Respect the `htmlhint.enable` setting: diagnostics are cleared and linting is skipped when disabled
+- Improved `meta-viewport-require` autofix
+- Improved autofixes for `alt-require`, `attr-lowercase`, `attr-no-duplication`, `attr-value-no-duplication`, `button-type-require` and `tagname-lowercase`
+- Fix duplicate quick fixes and quick fixes not appearing when other extensions report diagnostics
+- Fix diagnostics being re-published for closed files and files being validated twice on open
+
 ### v1.16.0 (2026-02-06)
 
 - Update HTMLHint to v1.8.1
