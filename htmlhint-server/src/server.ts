@@ -2164,6 +2164,13 @@ function createAttrValueNoDuplicationFix(
   const tagContent = text.substring(tagStart, tagEnd + 1);
   trace(`[DEBUG] createAttrValueNoDuplicationFix: Found tag: ${tagContent}`);
 
+  // Only fix the attribute named in the diagnostic, so other attributes whose
+  // values legitimately repeat words (e.g. alt="bye bye") are left untouched
+  const targetAttrMatch = diagnostic.message.match(/in attribute \[ (.+?) \]/);
+  const targetAttrName = targetAttrMatch
+    ? targetAttrMatch[1].toLowerCase()
+    : null;
+
   // Parse attributes from the tag to find the one with duplicate values
   const attrPattern = /(\w+(?:-\w+)*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
   let match;
@@ -2171,6 +2178,9 @@ function createAttrValueNoDuplicationFix(
 
   while ((match = attrPattern.exec(tagContent)) !== null) {
     const attrName = match[1];
+    if (targetAttrName && attrName.toLowerCase() !== targetAttrName) {
+      continue;
+    }
     const attrValue = match[2] || match[3] || match[4] || "";
     const fullMatch = match[0];
     const attrStartIndex = match.index;
@@ -2609,9 +2619,10 @@ connection.onInitialize(
     const result: InitializeResult = {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
-        codeActionProvider: {
-          codeActionKinds: [CodeActionKind.QuickFix],
-        },
+        // codeActionProvider is intentionally not advertised: the client registers its own
+        // provider that forwards diagnostic data to this server's textDocument/codeAction
+        // handler. Advertising it would make the language client register a second
+        // provider and every quick fix would be listed twice.
         workspace: {
           workspaceFolders: {
             supported: true,
@@ -2715,22 +2726,18 @@ function doValidate(connection: Connection, document: TextDocument): void {
   }
 }
 
-// A text document has changed. Validate the document.
+// A text document has been opened or changed. Validate the document.
+// TextDocuments fires onDidChangeContent on open as well, so no separate onDidOpen handler is needed.
 documents.onDidChangeContent((event) => {
-  // the contents of a text document has changed
   trace(`[DEBUG] Document content changed: ${event.document.uri}`);
   validateTextDocument(connection, event.document);
 });
 
-// A text document has been opened. Validate the document.
-documents.onDidOpen((event) => {
-  trace(`[DEBUG] Document opened: ${event.document.uri}`);
-  validateTextDocument(connection, event.document);
-});
-
-// Send an empty array of diagnostics to stop displaying them on a closed file
-connection.onDidCloseTextDocument((event) => {
-  const uri = event.textDocument.uri;
+// Send an empty array of diagnostics to stop displaying them on a closed file.
+// Use documents.onDidClose rather than connection.onDidCloseTextDocument, which would
+// replace the TextDocuments handler and leave closed documents in documents.all().
+documents.onDidClose((event) => {
+  const uri = event.document.uri;
   trace(`[DEBUG] Document closed: ${uri}`);
   connection.sendDiagnostics({ uri, diagnostics: [] });
 });
