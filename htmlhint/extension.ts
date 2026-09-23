@@ -139,7 +139,8 @@ export function activate(context: vscode.ExtensionContext) {
               raw: d.message.split(" ")[0], // Extract the raw element from the message
             };
             return {
-              range: d.range,
+              // vscode.Range serializes to [start, end]; the server expects an LSP range
+              range: client.code2ProtocolConverter.asRange(d.range),
               message: d.message,
               severity: d.severity,
               source: d.source,
@@ -157,7 +158,7 @@ export function activate(context: vscode.ExtensionContext) {
             "textDocument/codeAction",
             {
               textDocument: { uri: document.uri.toString() },
-              range,
+              range: client.code2ProtocolConverter.asRange(range),
               context: {
                 diagnostics: lspDiagnostics,
                 only: context.only,

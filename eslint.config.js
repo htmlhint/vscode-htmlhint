@@ -17,6 +17,7 @@ module.exports = [
       "**/*.d.ts",
       "out/**",
       "htmlhint/out/**",
+      "htmlhint/server/**",
       "htmlhint-server/out/**",
       "test/out/**",
       ".vscode-test/**",
@@ -104,15 +105,6 @@ module.exports = [
           args: "after-used",
         },
       ],
-    },
-  },
-  {
-    files: ["htmlhint/server/server.js"],
-    rules: {
-      curly: "off",
-      eqeqeq: "off",
-      "no-var": "off",
-      "prefer-const": "off",
     },
   },
   prettier,

@@ -4,11 +4,12 @@
   "private": true,
   "description": "HTMLHint Linter Server",
   "scripts": {
-    "compile": "tsc -p ./src",
-    "watch": "tsc --watch -p ./src"
+    "compile": "tsc --noEmit -p ./src && node ../htmlhint/esbuild.js --server",
+    "watch": "node ../htmlhint/esbuild.js --server --watch"
   },
   "dependencies": {
     "htmlhint": "^1.9.2",
+    "ignore": "^7.0.5",
     "strip-json-comments": "3.1.1",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12",
