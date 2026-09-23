@@ -116,8 +116,20 @@ export function activate(context: vscode.ExtensionContext) {
             `[DEBUG] Context diagnostics: ${JSON.stringify(context.diagnostics)}`,
           );
 
+          // Only handle HTMLHint diagnostics; others (e.g. from other extensions)
+          // lack the expected code shape and would break the conversion below
+          const htmlhintDiagnostics = context.diagnostics.filter(
+            (d) =>
+              d.source === "htmlhint" &&
+              typeof d.code === "object" &&
+              d.code !== null,
+          );
+          if (htmlhintDiagnostics.length === 0) {
+            return [];
+          }
+
           // Convert VS Code diagnostics to LSP diagnostics
-          const lspDiagnostics = context.diagnostics.map((d) => {
+          const lspDiagnostics = htmlhintDiagnostics.map((d) => {
             const code = d.code as { value: string; target: vscode.Uri };
             const data = (d as any).data || {
               ruleId: code.value,
