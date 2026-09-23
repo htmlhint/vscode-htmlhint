@@ -623,7 +623,7 @@ function createTagnameLowercaseFix(
   }
 
   // Find uppercase tag names and convert to lowercase
-  const tagPattern = /<\/?([A-Z][A-Za-z0-9]*)\b/g;
+  const tagPattern = /<\/?([A-Za-z][A-Za-z0-9-]*)\b/g;
   let match;
   const edits: TextEdit[] = [];
 
@@ -631,6 +631,11 @@ function createTagnameLowercaseFix(
     const startCol = match.index + 1 + (match[0].startsWith("</") ? 1 : 0); // Position after < or </
     const endCol = startCol + match[1].length;
     const tagName = match[1];
+
+    // Skip tags that are already lowercase
+    if (tagName === tagName.toLowerCase()) {
+      continue;
+    }
 
     // Check if this match is at or near the diagnostic position
     const diagnosticCol = diagnostic.data.col - 1;
@@ -690,7 +695,7 @@ function createAttrLowercaseFix(
   }
 
   // Find uppercase attribute names and convert to lowercase
-  const attrPattern = /\s([A-Z][A-Za-z0-9-_]*)\s*=/g;
+  const attrPattern = /\s([A-Za-z][A-Za-z0-9-_]*)\s*=/g;
   let match;
   const edits: TextEdit[] = [];
 
@@ -698,6 +703,11 @@ function createAttrLowercaseFix(
     const startCol = match.index + 1; // Position after the space
     const endCol = startCol + match[1].length;
     const attrName = match[1];
+
+    // Skip attributes that are already lowercase
+    if (attrName === attrName.toLowerCase()) {
+      continue;
+    }
 
     // Check if this match is at or near the diagnostic position
     const diagnosticCol = diagnostic.data.col - 1;
@@ -1157,7 +1167,11 @@ function createAltRequireFix(
     const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 30) {
       // Check if alt attribute already exists
-      if (attributes.toLowerCase().includes("alt=")) {
+      if (
+        /(^|\s)alt(\s*=|\s|$)/i.test(
+          attributes.replace(/"[^"]*"|'[^']*'/g, '""'),
+        )
+      ) {
         break;
       }
 
@@ -1256,7 +1270,9 @@ function createButtonTypeRequireFix(
     const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 15) {
       // Check if type attribute already exists
-      if (attributes.toLowerCase().includes("type=")) {
+      if (
+        /(^|\s)type\s*=/i.test(attributes.replace(/"[^"]*"|'[^']*'/g, '""'))
+      ) {
         break;
       }
 
@@ -2066,18 +2082,12 @@ function createAttrNoDuplicationFix(
     const absoluteStart = tagStart + duplicate.startIndex;
     const absoluteEnd = tagStart + duplicate.endIndex;
 
-    // Include any trailing whitespace after the attribute
-    let endPos = absoluteEnd;
-    while (endPos < text.length && /\s/.test(text[endPos])) {
-      endPos++;
-    }
-
-    // Include any leading whitespace before the attribute (but not if it's the first attribute)
+    // Include the leading whitespace before the attribute so the separator
+    // before the next attribute (or the tag end) is preserved
+    const endPos = absoluteEnd;
     let startPos = absoluteStart;
-    if (duplicate.startIndex > 0) {
-      while (startPos > tagStart && /\s/.test(text[startPos - 1])) {
-        startPos--;
-      }
+    while (startPos > tagStart && /\s/.test(text[startPos - 1])) {
+      startPos--;
     }
 
     edits.push({
@@ -2656,6 +2666,13 @@ function doValidate(connection: Connection, document: TextDocument): void {
     const fsPath = URI.parse(uri).fsPath;
 
     trace(`[DEBUG] doValidate called for: ${fsPath}`);
+
+    // Respect the htmlhint.enable setting
+    if (settings.htmlhint.enable === false) {
+      trace(`[DEBUG] HTMLHint is disabled, clearing diagnostics`);
+      connection.sendDiagnostics({ uri, diagnostics: [] });
+      return;
+    }
 
     // Check if file should be ignored based on .gitignore
     if (settings.htmlhint.ignoreGitignore) {
