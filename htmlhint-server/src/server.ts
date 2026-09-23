@@ -923,7 +923,7 @@ function createMetaViewportRequireFix(
   trace(
     `[DEBUG] createMetaViewportRequireFix: tag-self-close enabled=${shouldSelfClose}`,
   );
-  const viewportSnippet = `\n    <meta name="viewport" content="width=device-width, initial-scale=1.0"${shouldSelfClose ? " />" : ">"}`;
+  const viewportSnippet = `\n    <meta name="viewport" content="width=device-width"${shouldSelfClose ? " />" : ">"}`;
 
   let insertPosition: number;
 
