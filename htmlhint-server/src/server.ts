@@ -109,6 +109,15 @@ function makeDiagnostic(
 }
 
 /**
+ * Return the plain text of a diagnostic message, which LSP 3.18 allows to be MarkupContent
+ */
+function getDiagnosticMessage(diagnostic: Diagnostic): string {
+  return typeof diagnostic.message === "string"
+    ? diagnostic.message
+    : diagnostic.message.value;
+}
+
+/**
  * Get the HTMLHint configuration settings for the given HTML file.  This method will take care of whether to use
  * VS Code settings, or to use a .htmlhintrc file.
  */
@@ -2166,7 +2175,9 @@ function createAttrValueNoDuplicationFix(
 
   // Only fix the attribute named in the diagnostic, so other attributes whose
   // values legitimately repeat words (e.g. alt="bye bye") are left untouched
-  const targetAttrMatch = diagnostic.message.match(/in attribute \[ (.+?) \]/);
+  const targetAttrMatch = getDiagnosticMessage(diagnostic).match(
+    /in attribute \[ (.+?) \]/,
+  );
   const targetAttrName = targetAttrMatch
     ? targetAttrMatch[1].toLowerCase()
     : null;
@@ -2950,7 +2961,7 @@ connection.onRequest(
                       document.offsetAt(diagnostic.range.start),
                       document.offsetAt(diagnostic.range.end),
                     )
-                : diagnostic.message.split(" ")[0],
+                : getDiagnosticMessage(diagnostic).split(" ")[0],
           },
         };
 
