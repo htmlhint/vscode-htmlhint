@@ -28,7 +28,7 @@
     "package": "cd htmlhint && npm run vscode:prepublish && npx vsce package"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^10.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -38,7 +38,7 @@
     "@types/vscode": "1.101.0",
     "@typescript-eslint/eslint-plugin": "^8.70.1",
     "@typescript-eslint/parser": "^8.70.1",
-    "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-electron": "^3.1.0",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "glob": "^13.0.6",
