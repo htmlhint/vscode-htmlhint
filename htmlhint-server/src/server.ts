@@ -623,7 +623,7 @@ function createTagnameLowercaseFix(
   }
 
   // Find uppercase tag names and convert to lowercase
-  const tagPattern = /<\/?([A-Za-z][A-Za-z0-9]*)\b/g;
+  const tagPattern = /<\/?([A-Za-z][A-Za-z0-9-]*)\b/g;
   let match;
   const edits: TextEdit[] = [];
 
@@ -1167,7 +1167,11 @@ function createAltRequireFix(
     const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 30) {
       // Check if alt attribute already exists
-      if (/(^|\s)alt(\s*=|\s|$)/i.test(attributes)) {
+      if (
+        /(^|\s)alt(\s*=|\s|$)/i.test(
+          attributes.replace(/"[^"]*"|'[^']*'/g, '""'),
+        )
+      ) {
         break;
       }
 
@@ -1266,7 +1270,9 @@ function createButtonTypeRequireFix(
     const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 15) {
       // Check if type attribute already exists
-      if (/(^|\s)type\s*=/i.test(attributes)) {
+      if (
+        /(^|\s)type\s*=/i.test(attributes.replace(/"[^"]*"|'[^']*'/g, '""'))
+      ) {
         break;
       }
 
