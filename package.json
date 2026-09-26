@@ -25,10 +25,10 @@
     "compile:tests": "tsc -p ./test",
     "test": "npm run prettier && npm run lint && npm run compile && npm run compile:tests",
     "test-local": "node ./test/out/runTest.js",
-    "package": "cd htmlhint && npm run vscode:prepublish && npx vsce package"
+    "package": "cd htmlhint && npm run vscode:prepublish && vsce package"
   },
   "dependencies": {
-    "vscode-languageclient": "^10.1.1"
+    "vscode-languageclient": "^10.1.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -44,7 +44,7 @@
     "glob": "^13.0.6",
     "globals": "^17.12.0",
     "mocha": "^12.0.2",
-    "prettier": "3.9.8",
+    "prettier": "3.9.9",
     "ts-node": "^10.9.2",
     "typescript": "5.9.3"
   },
