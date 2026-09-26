@@ -96,7 +96,7 @@
     "@vscode/test-electron": "^3.1.0",
     "esbuild": "^0.28.2",
     "typescript": "5.9.3",
-    "vscode-languageclient": "10.1.1"
+    "vscode-languageclient": "10.1.2"
   },
   "volta": {
     "node": "22.23.2"

@@ -9,10 +9,10 @@
   },
   "dependencies": {
     "htmlhint": "^1.9.2",
-    "ignore": "^7.0.9",
+    "ignore": "^7.0.10",
     "strip-json-comments": "3.1.1",
-    "vscode-languageserver": "^10.1.1",
-    "vscode-languageserver-textdocument": "^1.0.14",
+    "vscode-languageserver": "^10.1.2",
+    "vscode-languageserver-textdocument": "^1.0.15",
     "vscode-uri": "^3.2.0"
   },
   "devDependencies": {

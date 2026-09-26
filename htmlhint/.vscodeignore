@@ -1,9 +1,5 @@
 .vscode/**
-**/coverage/**
-**/example/**
-**/examples/**
 **/test/**
-**/tests/**
 **/.cspell.json
 **/.DS_Store
 **/.editorconfig
@@ -14,19 +10,14 @@
 **/.github
 **/.gitignore
 **/.gitkeep
-**/.history/**
-**/.idea/**
 **/.jscpd.json
-**/.lycheeignore
 **/.npmignore
 **/.npmrc
 **/.nvmrc
 **/.prettierignore
 **/.prettierrc
 **/*.bnf
-**/*.css
 **/*.map
-**/*.travis.yml
 **/*.ts
 **/*.txt
 **/*.vsix
@@ -49,7 +40,6 @@ package-lock.json
 **/temp/**
 **/*.bak
 **/*.backup
-**/*.orig
 **/*.rej
 **/*.patch
 **/*.diff

@@ -2485,6 +2485,193 @@ function createEmptyTagNotSelfClosedFix(
 }
 
 /**
+ * Find the document offset of the raw source reported by a diagnostic.
+ * HTMLHint positions are not always the start of the raw text (tag diagnostics point
+ * after the tag name, and tags spanning multiple lines are reported on a later line),
+ * so the occurrence closest to the reported position is used.
+ */
+function findDiagnosticRawOffset(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): number {
+  const raw = diagnostic.data?.raw;
+  if (typeof raw !== "string" || raw.length === 0) {
+    return -1;
+  }
+
+  const text = document.getText();
+  const diagnosticOffset = document.offsetAt(diagnostic.range.start);
+  const before = text.lastIndexOf(raw, diagnosticOffset);
+  const after = text.indexOf(raw, diagnosticOffset);
+
+  if (before === -1) {
+    return after;
+  }
+  if (after === -1) {
+    return before;
+  }
+  return diagnosticOffset - before <= after - diagnosticOffset ? before : after;
+}
+
+/**
+ * Create auto-fix action for attr-value-single-quotes rule
+ */
+function createAttrValueSingleQuotesFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  if (
+    !diagnostic.data ||
+    diagnostic.data.ruleId !== "attr-value-single-quotes"
+  ) {
+    return null;
+  }
+
+  const offset = findDiagnosticRawOffset(document, diagnostic);
+  if (offset === -1) {
+    trace(`[DEBUG] createAttrValueSingleQuotesFix: Attribute not found`);
+    return null;
+  }
+
+  // The raw attribute includes its leading whitespace, which is preserved
+  const raw: string = diagnostic.data.raw;
+  const attrMatch = raw.match(
+    /^(\s*[^\s=]+\s*=\s*)(?:"([^"]*)"|([^\s"'`=<>]+))$/,
+  );
+  if (!attrMatch) {
+    trace(`[DEBUG] createAttrValueSingleQuotesFix: Unsupported attribute`);
+    return null;
+  }
+
+  const value = (attrMatch[2] ?? attrMatch[3]).replace(/'/g, "&#39;");
+
+  const edit: TextEdit = {
+    range: {
+      start: document.positionAt(offset),
+      end: document.positionAt(offset + raw.length),
+    },
+    newText: `${attrMatch[1]}'${value}'`,
+  };
+
+  return {
+    title: "Change attribute quotes to single quotes",
+    kind: CodeActionKind.QuickFix,
+    edit: {
+      changes: {
+        [document.uri]: [edit],
+      },
+    },
+    isPreferred: true,
+  };
+}
+
+/**
+ * Create auto-fix action for attr-unsafe-chars rule
+ */
+function createAttrUnsafeCharsFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  if (!diagnostic.data || diagnostic.data.ruleId !== "attr-unsafe-chars") {
+    return null;
+  }
+
+  const offset = findDiagnosticRawOffset(document, diagnostic);
+  if (offset === -1) {
+    trace(`[DEBUG] createAttrUnsafeCharsFix: Attribute not found`);
+    return null;
+  }
+
+  // Same character set as the HTMLHint attr-unsafe-chars rule
+  const unsafeChars =
+    // eslint-disable-next-line no-control-regex, no-misleading-character-class
+    /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+  // Leave the whitespace separating the attribute from the previous one untouched
+  const raw: string = diagnostic.data.raw;
+  const leadingWhitespace = raw.match(/^\s*/)![0];
+  const newText =
+    leadingWhitespace +
+    raw.slice(leadingWhitespace.length).replace(unsafeChars, "");
+
+  if (newText === raw) {
+    return null;
+  }
+
+  const edit: TextEdit = {
+    range: {
+      start: document.positionAt(offset),
+      end: document.positionAt(offset + raw.length),
+    },
+    newText,
+  };
+
+  return {
+    title: "Remove unsafe characters from attribute value",
+    kind: CodeActionKind.QuickFix,
+    edit: {
+      changes: {
+        [document.uri]: [edit],
+      },
+    },
+    isPreferred: true,
+  };
+}
+
+/**
+ * Create auto-fix action for frame-title-require rule
+ */
+function createFrameTitleRequireFix(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  if (!diagnostic.data || diagnostic.data.ruleId !== "frame-title-require") {
+    return null;
+  }
+
+  const offset = findDiagnosticRawOffset(document, diagnostic);
+  if (offset === -1) {
+    trace(`[DEBUG] createFrameTitleRequireFix: Tag not found`);
+    return null;
+  }
+
+  const raw: string = diagnostic.data.raw;
+  const tagMatch = raw.match(/^<(i?frame)(?=[\s/>])/i);
+  if (!tagMatch) {
+    trace(`[DEBUG] createFrameTitleRequireFix: Not a frame or iframe tag`);
+    return null;
+  }
+
+  // An empty aria-label still triggers the rule; don't add a duplicate
+  if (
+    /\saria-label(\s*=|[\s/>])/i.test(raw.replace(/"[^"]*"|'[^']*'/g, '""'))
+  ) {
+    trace(`[DEBUG] createFrameTitleRequireFix: aria-label already exists`);
+    return null;
+  }
+
+  // Insert directly after the tag name
+  const insertPosition = document.positionAt(offset + tagMatch[0].length);
+  const edit: TextEdit = {
+    range: {
+      start: insertPosition,
+      end: insertPosition,
+    },
+    newText: ' aria-label=""',
+  };
+
+  return {
+    title: "Add aria-label attribute",
+    kind: CodeActionKind.QuickFix,
+    edit: {
+      changes: {
+        [document.uri]: [edit],
+      },
+    },
+    isPreferred: true,
+  };
+}
+
+/**
  * Create auto-fix actions for supported rules
  */
 async function createAutoFixes(
@@ -2521,6 +2708,18 @@ async function createAutoFixes(
         case "attr-value-double-quotes":
           trace(`[DEBUG] Calling createAttrValueDoubleQuotesFix`);
           fix = await createAttrValueDoubleQuotesFix(document, diagnostic);
+          break;
+        case "attr-value-single-quotes":
+          trace(`[DEBUG] Calling createAttrValueSingleQuotesFix`);
+          fix = createAttrValueSingleQuotesFix(document, diagnostic);
+          break;
+        case "attr-unsafe-chars":
+          trace(`[DEBUG] Calling createAttrUnsafeCharsFix`);
+          fix = createAttrUnsafeCharsFix(document, diagnostic);
+          break;
+        case "frame-title-require":
+          trace(`[DEBUG] Calling createFrameTitleRequireFix`);
+          fix = createFrameTitleRequireFix(document, diagnostic);
           break;
         case "tagname-lowercase":
           trace(`[DEBUG] Calling createTagnameLowercaseFix`);
