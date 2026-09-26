@@ -34,7 +34,6 @@ import {
   CodeAction,
   CodeActionKind,
   TextEdit,
-  WorkspaceEdit,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as htmlhint from "htmlhint";
@@ -404,6 +403,63 @@ function trace(message: string, verbose?: string): void {
   connection.console.log(message);
 }
 
+type AutoFix = (
+  document: TextDocument,
+  diagnostic: Diagnostic,
+) => CodeAction | null;
+
+/**
+ * Wrap edits to the given document in a preferred quick fix action.
+ * Returns null when there are no edits.
+ */
+function makeFix(
+  document: TextDocument,
+  title: string,
+  edits: TextEdit[],
+  diagnostic?: Diagnostic,
+): CodeAction | null {
+  if (edits.length === 0) {
+    return null;
+  }
+
+  const action: CodeAction = {
+    title,
+    kind: CodeActionKind.QuickFix,
+    edit: {
+      changes: {
+        [document.uri]: edits,
+      },
+    },
+    isPreferred: true,
+  };
+
+  if (diagnostic) {
+    action.diagnostics = [diagnostic];
+  }
+
+  return action;
+}
+
+/**
+ * Get the source line a diagnostic was reported on, with 0-based line and column
+ */
+function getDiagnosticLine(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): { text: string; lineIndex: number; col: number } | null {
+  const { line, col } = diagnostic.data;
+  if (typeof line !== "number" || typeof col !== "number") {
+    return null;
+  }
+
+  const text = document.getText().split("\n")[line - 1];
+  if (!text) {
+    return null;
+  }
+
+  return { text, lineIndex: line - 1, col: col - 1 };
+}
+
 /**
  * Create auto-fix action for html-lang-require rule
  */
@@ -414,13 +470,6 @@ function createHtmlLangRequireFix(
   trace(
     `[DEBUG] createHtmlLangRequireFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
   );
-
-  if (!diagnostic.data || diagnostic.data.ruleId !== "html-lang-require") {
-    trace(
-      `[DEBUG] createHtmlLangRequireFix: Invalid diagnostic data or ruleId`,
-    );
-    return null;
-  }
 
   const text = document.getText();
   const htmlTagMatch = text.match(/<html(\s[^>]*)?>/i);
@@ -450,27 +499,10 @@ function createHtmlLangRequireFix(
     `[DEBUG] createHtmlLangRequireFix: Will insert "${newText}" at position ${JSON.stringify(insertPosition)}`,
   );
 
-  const edit: TextEdit = {
-    range: {
-      start: insertPosition,
-      end: insertPosition,
-    },
-    newText: newText,
-  };
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: [edit],
-    },
-  };
-
   trace(`[DEBUG] createHtmlLangRequireFix: Returning fix action`);
-  return {
-    title: 'Add lang="en" attribute to html tag',
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, 'Add lang="en" attribute to html tag', [
+    { range: { start: insertPosition, end: insertPosition }, newText },
+  ]);
 }
 
 /**
@@ -478,12 +510,8 @@ function createHtmlLangRequireFix(
  */
 function createTitleRequireFix(
   document: TextDocument,
-  diagnostic: Diagnostic,
+  _diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (!diagnostic.data || diagnostic.data.ruleId !== "title-require") {
-    return null;
-  }
-
   const text = document.getText();
   const headMatch = text.match(/<head(\s[^>]*)?>([\s\S]*?)<\/head>/i);
 
@@ -517,26 +545,10 @@ function createTitleRequireFix(
     newText = "\n    <title>Document</title>";
   }
 
-  const edit: TextEdit = {
-    range: {
-      start: document.positionAt(insertPosition),
-      end: document.positionAt(insertPosition),
-    },
-    newText: newText,
-  };
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: [edit],
-    },
-  };
-
-  return {
-    title: "Add <title> tag",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  const position = document.positionAt(insertPosition);
+  return makeFix(document, "Add <title> tag", [
+    { range: { start: position, end: position }, newText },
+  ]);
 }
 
 /**
@@ -546,22 +558,11 @@ function createAttrValueDoubleQuotesFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "attr-value-double-quotes" ||
-    typeof diagnostic.data.line !== "number" ||
-    typeof diagnostic.data.col !== "number"
-  ) {
+  const source = getDiagnosticLine(document, diagnostic);
+  if (!source) {
     return null;
   }
-
-  const text = document.getText();
-  const lines = text.split("\n");
-  const line = lines[diagnostic.data.line - 1];
-
-  if (!line) {
-    return null;
-  }
+  const { text: line, lineIndex, col: diagnosticCol } = source;
 
   // Find single-quoted attributes and replace with double quotes
   const singleQuotePattern = /(\w+)='([^']*)'/g;
@@ -575,9 +576,7 @@ function createAttrValueDoubleQuotesFix(
     const attrValue = match[2];
 
     // Check if this match is at or near the diagnostic position
-    const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 10) {
-      const lineIndex = diagnostic.data.line - 1;
       const startPos = { line: lineIndex, character: startCol };
       const endPos = { line: lineIndex, character: endCol };
 
@@ -589,22 +588,7 @@ function createAttrValueDoubleQuotesFix(
     }
   }
 
-  if (edits.length === 0) {
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: "Change attribute quotes to double quotes",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, "Change attribute quotes to double quotes", edits);
 }
 
 /**
@@ -614,22 +598,11 @@ function createTagnameLowercaseFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "tagname-lowercase" ||
-    typeof diagnostic.data.line !== "number" ||
-    typeof diagnostic.data.col !== "number"
-  ) {
+  const source = getDiagnosticLine(document, diagnostic);
+  if (!source) {
     return null;
   }
-
-  const text = document.getText();
-  const lines = text.split("\n");
-  const line = lines[diagnostic.data.line - 1];
-
-  if (!line) {
-    return null;
-  }
+  const { text: line, lineIndex, col: diagnosticCol } = source;
 
   // Find uppercase tag names and convert to lowercase
   const tagPattern = /<\/?([A-Za-z][A-Za-z0-9-]*)\b/g;
@@ -647,9 +620,7 @@ function createTagnameLowercaseFix(
     }
 
     // Check if this match is at or near the diagnostic position
-    const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(match.index - diagnosticCol) <= 5) {
-      const lineIndex = diagnostic.data.line - 1;
       const startPos = { line: lineIndex, character: startCol };
       const endPos = { line: lineIndex, character: endCol };
 
@@ -661,22 +632,7 @@ function createTagnameLowercaseFix(
     }
   }
 
-  if (edits.length === 0) {
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: "Convert tag to lowercase",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, "Convert tag to lowercase", edits);
 }
 
 /**
@@ -686,22 +642,11 @@ function createAttrLowercaseFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "attr-lowercase" ||
-    typeof diagnostic.data.line !== "number" ||
-    typeof diagnostic.data.col !== "number"
-  ) {
+  const source = getDiagnosticLine(document, diagnostic);
+  if (!source) {
     return null;
   }
-
-  const text = document.getText();
-  const lines = text.split("\n");
-  const line = lines[diagnostic.data.line - 1];
-
-  if (!line) {
-    return null;
-  }
+  const { text: line, lineIndex, col: diagnosticCol } = source;
 
   // Find uppercase attribute names and convert to lowercase
   const attrPattern = /\s([A-Za-z][A-Za-z0-9-_]*)\s*=/g;
@@ -719,9 +664,7 @@ function createAttrLowercaseFix(
     }
 
     // Check if this match is at or near the diagnostic position
-    const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 5) {
-      const lineIndex = diagnostic.data.line - 1;
       const startPos = { line: lineIndex, character: startCol };
       const endPos = { line: lineIndex, character: endCol };
 
@@ -733,22 +676,7 @@ function createAttrLowercaseFix(
     }
   }
 
-  if (edits.length === 0) {
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: "Convert attribute to lowercase",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, "Convert attribute to lowercase", edits);
 }
 
 /**
@@ -756,12 +684,8 @@ function createAttrLowercaseFix(
  */
 function createDoctypeFirstFix(
   document: TextDocument,
-  diagnostic: Diagnostic,
+  _diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (!diagnostic.data || diagnostic.data.ruleId !== "doctype-first") {
-    return null;
-  }
-
   const text = document.getText();
 
   // Check if DOCTYPE already exists (shouldn't if this rule triggered, but let's be safe)
@@ -771,28 +695,12 @@ function createDoctypeFirstFix(
 
   // Insert DOCTYPE at the beginning of the document
   const insertPosition = document.positionAt(0);
-  const newText = "<!doctype html>\n";
-
-  const edit: TextEdit = {
-    range: {
-      start: insertPosition,
-      end: insertPosition,
+  return makeFix(document, "Add DOCTYPE html declaration", [
+    {
+      range: { start: insertPosition, end: insertPosition },
+      newText: "<!doctype html>\n",
     },
-    newText: newText,
-  };
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: [edit],
-    },
-  };
-
-  return {
-    title: "Add DOCTYPE html declaration",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  ]);
 }
 
 /**
@@ -800,12 +708,8 @@ function createDoctypeFirstFix(
  */
 function createDoctypeHtml5Fix(
   document: TextDocument,
-  diagnostic: Diagnostic,
+  _diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (!diagnostic.data || diagnostic.data.ruleId !== "doctype-html5") {
-    return null;
-  }
-
   const text = document.getText();
 
   // Find the existing DOCTYPE declaration
@@ -817,26 +721,15 @@ function createDoctypeHtml5Fix(
   const doctypeStart = doctypeMatch.index!;
   const doctypeEnd = doctypeStart + doctypeMatch[0].length;
 
-  const edit: TextEdit = {
-    range: {
-      start: document.positionAt(doctypeStart),
-      end: document.positionAt(doctypeEnd),
+  return makeFix(document, "Convert to HTML5 DOCTYPE", [
+    {
+      range: {
+        start: document.positionAt(doctypeStart),
+        end: document.positionAt(doctypeEnd),
+      },
+      newText: "<!doctype html>",
     },
-    newText: "<!doctype html>",
-  };
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: [edit],
-    },
-  };
-
-  return {
-    title: "Convert to HTML5 DOCTYPE",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  ]);
 }
 
 /**
@@ -844,12 +737,8 @@ function createDoctypeHtml5Fix(
  */
 function createMetaCharsetRequireFix(
   document: TextDocument,
-  diagnostic: Diagnostic,
+  _diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (!diagnostic.data || diagnostic.data.ruleId !== "meta-charset-require") {
-    return null;
-  }
-
   const text = document.getText();
   const headMatch = text.match(/<head(\s[^>]*)?>([\s\S]*?)<\/head>/i);
 
@@ -873,26 +762,10 @@ function createMetaCharsetRequireFix(
   const newText =
     '\n    <meta charset="UTF-8"' + (shouldSelfClose ? " />" : ">");
 
-  const edit: TextEdit = {
-    range: {
-      start: document.positionAt(insertPosition),
-      end: document.positionAt(insertPosition),
-    },
-    newText: newText,
-  };
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: [edit],
-    },
-  };
-
-  return {
-    title: 'Add <meta charset="UTF-8"> tag',
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  const position = document.positionAt(insertPosition);
+  return makeFix(document, 'Add <meta charset="UTF-8"> tag', [
+    { range: { start: position, end: position }, newText },
+  ]);
 }
 
 /**
@@ -900,12 +773,8 @@ function createMetaCharsetRequireFix(
  */
 function createMetaViewportRequireFix(
   document: TextDocument,
-  diagnostic: Diagnostic,
+  _diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (!diagnostic.data || diagnostic.data.ruleId !== "meta-viewport-require") {
-    return null;
-  }
-
   const text = document.getText();
   const headMatch = text.match(/<head(\s[^>]*)?>([\s\S]*?)<\/head>/i);
 
@@ -944,26 +813,10 @@ function createMetaViewportRequireFix(
     insertPosition = headStart;
   }
 
-  const edit: TextEdit = {
-    range: {
-      start: document.positionAt(insertPosition),
-      end: document.positionAt(insertPosition),
-    },
-    newText: viewportSnippet,
-  };
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: [edit],
-    },
-  };
-
-  return {
-    title: 'Add <meta name="viewport"> tag',
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  const position = document.positionAt(insertPosition);
+  return makeFix(document, 'Add <meta name="viewport"> tag', [
+    { range: { start: position, end: position }, newText: viewportSnippet },
+  ]);
 }
 
 /**
@@ -971,15 +824,8 @@ function createMetaViewportRequireFix(
  */
 function createMetaDescriptionRequireFix(
   document: TextDocument,
-  diagnostic: Diagnostic,
+  _diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "meta-description-require"
-  ) {
-    return null;
-  }
-
   const text = document.getText();
   const headMatch = text.match(/<head(\s[^>]*)?>([\s\S]*?)<\/head>/i);
 
@@ -1026,26 +872,10 @@ function createMetaDescriptionRequireFix(
     insertPosition = headStart;
   }
 
-  const edit: TextEdit = {
-    range: {
-      start: document.positionAt(insertPosition),
-      end: document.positionAt(insertPosition),
-    },
-    newText: descriptionSnippet,
-  };
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: [edit],
-    },
-  };
-
-  return {
-    title: 'Add <meta name="description"> tag',
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  const position = document.positionAt(insertPosition);
+  return makeFix(document, 'Add <meta name="description"> tag', [
+    { range: { start: position, end: position }, newText: descriptionSnippet },
+  ]);
 }
 
 /**
@@ -1053,15 +883,8 @@ function createMetaDescriptionRequireFix(
  */
 function createLinkRelCanonicalRequireFix(
   document: TextDocument,
-  diagnostic: Diagnostic,
+  _diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "link-rel-canonical-require"
-  ) {
-    return null;
-  }
-
   const text = document.getText();
   const headMatch = text.match(/<head(\s[^>]*)?>([\s\S]*?)<\/head>/i);
 
@@ -1115,26 +938,10 @@ function createLinkRelCanonicalRequireFix(
     insertPosition = headStart;
   }
 
-  const edit: TextEdit = {
-    range: {
-      start: document.positionAt(insertPosition),
-      end: document.positionAt(insertPosition),
-    },
-    newText: canonicalSnippet,
-  };
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: [edit],
-    },
-  };
-
-  return {
-    title: 'Add <link rel="canonical"> tag',
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  const position = document.positionAt(insertPosition);
+  return makeFix(document, 'Add <link rel="canonical"> tag', [
+    { range: { start: position, end: position }, newText: canonicalSnippet },
+  ]);
 }
 
 /**
@@ -1144,21 +951,11 @@ function createAltRequireFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (!diagnostic.data || diagnostic.data.ruleId !== "alt-require") {
-    trace(`[DEBUG] createAltRequireFix: Invalid diagnostic data or ruleId`);
+  const source = getDiagnosticLine(document, diagnostic);
+  if (!source) {
     return null;
   }
-
-  const text = document.getText();
-  const lines = text.split("\n");
-  const line = lines[diagnostic.data.line - 1];
-
-  if (!line) {
-    trace(
-      `[DEBUG] createAltRequireFix: No line found at ${diagnostic.data.line}`,
-    );
-    return null;
-  }
+  const { text: line, lineIndex, col: diagnosticCol } = source;
 
   // Find img, area[href], or input[type=image] tags missing alt attribute
   const imgPattern = /<(img|area|input)((?:\s+[^>]*?)?)\s*(\/?)>/gi;
@@ -1173,7 +970,6 @@ function createAltRequireFix(
     const selfClosing = match[3] || "";
 
     // Check if this match is at or near the diagnostic position
-    const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 30) {
       // Check if alt attribute already exists
       if (
@@ -1197,11 +993,8 @@ function createAltRequireFix(
         }
       }
 
-      const startPos = {
-        line: diagnostic.data.line - 1,
-        character: startCol,
-      };
-      const endPos = { line: diagnostic.data.line - 1, character: endCol };
+      const startPos = { line: lineIndex, character: startCol };
+      const endPos = { line: lineIndex, character: endCol };
 
       // Add alt attribute properly
       let newText: string;
@@ -1221,23 +1014,7 @@ function createAltRequireFix(
     }
   }
 
-  if (edits.length === 0) {
-    trace(`[DEBUG] createAltRequireFix: No edits created`);
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: "Add alt attribute",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, "Add alt attribute", edits);
 }
 
 /**
@@ -1247,23 +1024,11 @@ function createButtonTypeRequireFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (!diagnostic.data || diagnostic.data.ruleId !== "button-type-require") {
-    trace(
-      `[DEBUG] createButtonTypeRequireFix: Invalid diagnostic data or ruleId`,
-    );
+  const source = getDiagnosticLine(document, diagnostic);
+  if (!source) {
     return null;
   }
-
-  const text = document.getText();
-  const lines = text.split("\n");
-  const line = lines[diagnostic.data.line - 1];
-
-  if (!line) {
-    trace(
-      `[DEBUG] createButtonTypeRequireFix: No line found at ${diagnostic.data.line}`,
-    );
-    return null;
-  }
+  const { text: line, lineIndex, col: diagnosticCol } = source;
 
   // Find button tags missing type attribute
   const buttonPattern = /<button(\s[^>]*)?>/gi;
@@ -1276,7 +1041,6 @@ function createButtonTypeRequireFix(
     const attributes = match[1] || "";
 
     // Check if this match is at or near the diagnostic position
-    const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 15) {
       // Check if type attribute already exists
       if (
@@ -1285,11 +1049,8 @@ function createButtonTypeRequireFix(
         break;
       }
 
-      const startPos = {
-        line: diagnostic.data.line - 1,
-        character: startCol,
-      };
-      const endPos = { line: diagnostic.data.line - 1, character: endCol };
+      const startPos = { line: lineIndex, character: startCol };
+      const endPos = { line: lineIndex, character: endCol };
 
       // Add type="button" attribute
       const newText = `<button${attributes} type="button">`;
@@ -1302,23 +1063,7 @@ function createButtonTypeRequireFix(
     }
   }
 
-  if (edits.length === 0) {
-    trace(`[DEBUG] createButtonTypeRequireFix: No edits created`);
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: 'Add type="button" attribute',
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, 'Add type="button" attribute', edits);
 }
 
 /**
@@ -1328,26 +1073,11 @@ function createAttrNoUnnecessaryWhitespaceFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "attr-no-unnecessary-whitespace"
-  ) {
-    trace(
-      `[DEBUG] createAttrNoUnnecessaryWhitespaceFix: Invalid diagnostic data or ruleId`,
-    );
+  const source = getDiagnosticLine(document, diagnostic);
+  if (!source) {
     return null;
   }
-
-  const text = document.getText();
-  const lines = text.split("\n");
-  const line = lines[diagnostic.data.line - 1];
-
-  if (!line) {
-    trace(
-      `[DEBUG] createAttrNoUnnecessaryWhitespaceFix: No line found at ${diagnostic.data.line}`,
-    );
-    return null;
-  }
+  const { text: line, lineIndex, col: diagnosticCol } = source;
 
   // Find attributes with unnecessary whitespace around the = sign
   const attrPattern = /(\w+)\s*=\s*("([^"]*)"|'([^']*)')/g;
@@ -1361,15 +1091,11 @@ function createAttrNoUnnecessaryWhitespaceFix(
     const attrValue = match[2];
 
     // Check if this match is at or near the diagnostic position
-    const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 10) {
       // Check if there's unnecessary whitespace
       if (match[0] !== `${attrName}=${attrValue}`) {
-        const startPos = {
-          line: diagnostic.data.line - 1,
-          character: startCol,
-        };
-        const endPos = { line: diagnostic.data.line - 1, character: endCol };
+        const startPos = { line: lineIndex, character: startCol };
+        const endPos = { line: lineIndex, character: endCol };
 
         edits.push({
           range: { start: startPos, end: endPos },
@@ -1380,23 +1106,11 @@ function createAttrNoUnnecessaryWhitespaceFix(
     }
   }
 
-  if (edits.length === 0) {
-    trace(`[DEBUG] createAttrNoUnnecessaryWhitespaceFix: No edits created`);
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: "Remove unnecessary whitespace around attribute",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(
+    document,
+    "Remove unnecessary whitespace around attribute",
+    edits,
+  );
 }
 
 /**
@@ -1417,26 +1131,12 @@ function createAttrWhitespaceFix(
     `[DEBUG] createAttrWhitespaceFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
   );
 
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "attr-whitespace" ||
-    typeof diagnostic.data.line !== "number" ||
-    typeof diagnostic.data.col !== "number"
-  ) {
-    trace(`[DEBUG] createAttrWhitespaceFix: Invalid diagnostic data or ruleId`);
+  const source = getDiagnosticLine(document, diagnostic);
+  if (!source) {
+    trace(`[DEBUG] createAttrWhitespaceFix: No line found`);
     return null;
   }
-
-  const text = document.getText();
-  const lines = text.split("\n");
-  const line = lines[diagnostic.data.line - 1];
-
-  if (!line) {
-    trace(
-      `[DEBUG] createAttrWhitespaceFix: No line found at ${diagnostic.data.line}`,
-    );
-    return null;
-  }
+  const { text: line, lineIndex, col: diagnosticCol } = source;
 
   // Find attributes with leading or trailing whitespace in their values
   // This pattern matches: attrName=" value " or attrName=' value '
@@ -1452,16 +1152,12 @@ function createAttrWhitespaceFix(
     const attrValue = match[3] || match[4]; // match[3] for double quotes, match[4] for single quotes
 
     // Check if this match is at or near the diagnostic position
-    const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 10) {
       // Check if there's leading or trailing whitespace
       const trimmedValue = attrValue.trim();
       if (trimmedValue !== attrValue) {
-        const startPos = {
-          line: diagnostic.data.line - 1,
-          character: startCol,
-        };
-        const endPos = { line: diagnostic.data.line - 1, character: endCol };
+        const startPos = { line: lineIndex, character: startCol };
+        const endPos = { line: lineIndex, character: endCol };
 
         edits.push({
           range: { start: startPos, end: endPos },
@@ -1472,23 +1168,11 @@ function createAttrWhitespaceFix(
     }
   }
 
-  if (edits.length === 0) {
-    trace(`[DEBUG] createAttrWhitespaceFix: No edits created`);
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: "Remove leading/trailing whitespace from attribute value",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(
+    document,
+    "Remove leading/trailing whitespace from attribute value",
+    edits,
+  );
 }
 
 /**
@@ -1509,16 +1193,6 @@ function createTagSelfCloseFix(
     `[DEBUG] createTagSelfCloseFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
   );
 
-  if (!diagnostic.data || diagnostic.data.ruleId !== "tag-self-close") {
-    trace(
-      `[DEBUG] createTagSelfCloseFix: Invalid diagnostic data or ruleId: ${JSON.stringify(diagnostic.data)}`,
-    );
-    return null;
-  }
-
-  trace(
-    `[DEBUG] createTagSelfCloseFix: Valid diagnostic for tag-self-close rule`,
-  );
   trace(`[DEBUG] Diagnostic range: ${JSON.stringify(diagnostic.range)}`);
   trace(`[DEBUG] Diagnostic data: ${JSON.stringify(diagnostic.data)}`);
 
@@ -1598,18 +1272,7 @@ function createTagSelfCloseFix(
     `[DEBUG] createTagSelfCloseFix: Created edit to replace '>' with ' />'`,
   );
 
-  const action = CodeAction.create(
-    "Add self-closing tag",
-    {
-      changes: {
-        [document.uri]: [edit],
-      },
-    },
-    CodeActionKind.QuickFix,
-  );
-
-  action.diagnostics = [diagnostic];
-  action.isPreferred = true;
+  const action = makeFix(document, "Add self-closing tag", [edit], diagnostic);
 
   trace(
     `[DEBUG] createTagSelfCloseFix: Created code action: ${JSON.stringify(action)}`,
@@ -1625,22 +1288,11 @@ function createSpecCharEscapeFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "spec-char-escape" ||
-    typeof diagnostic.data.line !== "number" ||
-    typeof diagnostic.data.col !== "number"
-  ) {
+  const source = getDiagnosticLine(document, diagnostic);
+  if (!source) {
     return null;
   }
-
-  const text = document.getText();
-  const lines = text.split("\n");
-  const line = lines[diagnostic.data.line - 1];
-
-  if (!line) {
-    return null;
-  }
+  const { text: line, lineIndex, col: diagnosticCol } = source;
 
   // Find unescaped special characters that need to be escaped
   // We need to be careful not to escape characters that are already in HTML tags or attributes
@@ -1654,7 +1306,6 @@ function createSpecCharEscapeFix(
     const char = match[1];
 
     // Check if this match is at or near the diagnostic position
-    const diagnosticCol = diagnostic.data.col - 1;
     if (Math.abs(startCol - diagnosticCol) <= 5) {
       // Determine if this character is inside a tag (should not be escaped)
       const beforeMatch = line.substring(0, startCol);
@@ -1666,7 +1317,6 @@ function createSpecCharEscapeFix(
         continue;
       }
 
-      const lineIndex = diagnostic.data.line - 1;
       const startPos = { line: lineIndex, character: startCol };
       const endPos = { line: lineIndex, character: endCol };
 
@@ -1687,22 +1337,7 @@ function createSpecCharEscapeFix(
     }
   }
 
-  if (edits.length === 0) {
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: "Escape special character",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, "Escape special character", edits);
 }
 
 /**
@@ -1722,11 +1357,6 @@ function createTagNoObsoleteFix(
   trace(
     `[DEBUG] createTagNoObsoleteFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
   );
-
-  if (!diagnostic.data || diagnostic.data.ruleId !== "tag-no-obsolete") {
-    trace(`[DEBUG] createTagNoObsoleteFix: Invalid diagnostic data or ruleId`);
-    return null;
-  }
 
   const text = document.getText();
   const edits: TextEdit[] = [];
@@ -1844,23 +1474,7 @@ function createTagNoObsoleteFix(
     }
   }
 
-  if (edits.length === 0) {
-    trace(`[DEBUG] createTagNoObsoleteFix: No edits created`);
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: "Convert obsolete tag to modern equivalent",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, "Convert obsolete tag to modern equivalent", edits);
 }
 
 /**
@@ -1999,13 +1613,6 @@ function createAttrNoDuplicationFix(
     `[DEBUG] createAttrNoDuplicationFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
   );
 
-  if (!diagnostic.data || diagnostic.data.ruleId !== "attr-no-duplication") {
-    trace(
-      `[DEBUG] createAttrNoDuplicationFix: Invalid diagnostic data or ruleId`,
-    );
-    return null;
-  }
-
   const text = document.getText();
   // Find the tag containing the duplicate attributes
   // Look for the opening tag that contains the diagnostic position
@@ -2112,27 +1719,12 @@ function createAttrNoDuplicationFix(
     );
   }
 
-  if (edits.length === 0) {
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
   const title =
     duplicatesToRemove.length === 1
       ? `Remove duplicate ${duplicatesToRemove[0].name} attribute`
       : `Remove ${duplicatesToRemove.length} duplicate attributes`;
 
-  return {
-    title,
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, title, edits);
 }
 
 /**
@@ -2146,16 +1738,6 @@ function createAttrValueNoDuplicationFix(
   trace(
     `[DEBUG] createAttrValueNoDuplicationFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
   );
-
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "attr-value-no-duplication"
-  ) {
-    trace(
-      `[DEBUG] createAttrValueNoDuplicationFix: Invalid diagnostic data or ruleId`,
-    );
-    return null;
-  }
 
   const text = document.getText();
   const diagnosticOffset = document.offsetAt(diagnostic.range.start);
@@ -2230,23 +1812,7 @@ function createAttrValueNoDuplicationFix(
     }
   }
 
-  if (edits.length === 0) {
-    trace(`[DEBUG] createAttrValueNoDuplicationFix: No edits created`);
-    return null;
-  }
-
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: edits,
-    },
-  };
-
-  return {
-    title: "Remove duplicate values from attribute",
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  return makeFix(document, "Remove duplicate values from attribute", edits);
 }
 
 /**
@@ -2259,13 +1825,6 @@ function createFormMethodRequireFix(
   trace(
     `[DEBUG] createFormMethodRequireFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
   );
-
-  if (!diagnostic.data || diagnostic.data.ruleId !== "form-method-require") {
-    trace(
-      `[DEBUG] createFormMethodRequireFix: Invalid diagnostic data or ruleId`,
-    );
-    return null;
-  }
 
   const text = document.getText();
   const diagnosticOffset = document.offsetAt(diagnostic.range.start);
@@ -2322,30 +1881,14 @@ function createFormMethodRequireFix(
     insertPosition = tagStart + beforeAttrs.length;
   }
 
-  const edit: TextEdit = {
-    range: {
-      start: document.positionAt(insertPosition),
-      end: document.positionAt(insertPosition),
-    },
-    newText: newText,
-  };
-
   trace(
     `[DEBUG] createFormMethodRequireFix: Will insert "${newText}" at position ${insertPosition}`,
   );
 
-  const workspaceEdit: WorkspaceEdit = {
-    changes: {
-      [document.uri]: [edit],
-    },
-  };
-
-  return {
-    title: 'Add method="" attribute to form',
-    kind: CodeActionKind.QuickFix,
-    edit: workspaceEdit,
-    isPreferred: true,
-  };
+  const position = document.positionAt(insertPosition);
+  return makeFix(document, 'Add method="" attribute to form', [
+    { range: { start: position, end: position }, newText },
+  ]);
 }
 
 /**
@@ -2367,16 +1910,6 @@ function createEmptyTagNotSelfClosedFix(
   trace(
     `[DEBUG] createEmptyTagNotSelfClosedFix called with diagnostic: ${JSON.stringify(diagnostic)}`,
   );
-
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "empty-tag-not-self-closed"
-  ) {
-    trace(
-      `[DEBUG] createEmptyTagNotSelfClosedFix: Invalid diagnostic data or ruleId: ${JSON.stringify(diagnostic.data)}`,
-    );
-    return null;
-  }
 
   const text = document.getText();
   const diagnosticOffset = document.offsetAt(diagnostic.range.start);
@@ -2461,20 +1994,12 @@ function createEmptyTagNotSelfClosedFix(
         `[DEBUG] createEmptyTagNotSelfClosedFix: Will replace "${fullMatch}" with "${selfClosingTag}"`,
       );
 
-      const action = CodeAction.create(
+      return makeFix(
+        document,
         `Convert ${tagName} tag to self-closing`,
-        {
-          changes: {
-            [document.uri]: [edit],
-          },
-        },
-        CodeActionKind.QuickFix,
+        [edit],
+        diagnostic,
       );
-
-      action.diagnostics = [diagnostic];
-      action.isPreferred = true;
-
-      return action;
     }
   }
 
@@ -2520,13 +2045,6 @@ function createAttrValueSingleQuotesFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (
-    !diagnostic.data ||
-    diagnostic.data.ruleId !== "attr-value-single-quotes"
-  ) {
-    return null;
-  }
-
   const offset = findDiagnosticRawOffset(document, diagnostic);
   if (offset === -1) {
     trace(`[DEBUG] createAttrValueSingleQuotesFix: Attribute not found`);
@@ -2545,24 +2063,15 @@ function createAttrValueSingleQuotesFix(
 
   const value = (attrMatch[2] ?? attrMatch[3]).replace(/'/g, "&#39;");
 
-  const edit: TextEdit = {
-    range: {
-      start: document.positionAt(offset),
-      end: document.positionAt(offset + raw.length),
-    },
-    newText: `${attrMatch[1]}'${value}'`,
-  };
-
-  return {
-    title: "Change attribute quotes to single quotes",
-    kind: CodeActionKind.QuickFix,
-    edit: {
-      changes: {
-        [document.uri]: [edit],
+  return makeFix(document, "Change attribute quotes to single quotes", [
+    {
+      range: {
+        start: document.positionAt(offset),
+        end: document.positionAt(offset + raw.length),
       },
+      newText: `${attrMatch[1]}'${value}'`,
     },
-    isPreferred: true,
-  };
+  ]);
 }
 
 /**
@@ -2572,10 +2081,6 @@ function createAttrUnsafeCharsFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (!diagnostic.data || diagnostic.data.ruleId !== "attr-unsafe-chars") {
-    return null;
-  }
-
   const offset = findDiagnosticRawOffset(document, diagnostic);
   if (offset === -1) {
     trace(`[DEBUG] createAttrUnsafeCharsFix: Attribute not found`);
@@ -2597,24 +2102,15 @@ function createAttrUnsafeCharsFix(
     return null;
   }
 
-  const edit: TextEdit = {
-    range: {
-      start: document.positionAt(offset),
-      end: document.positionAt(offset + raw.length),
-    },
-    newText,
-  };
-
-  return {
-    title: "Remove unsafe characters from attribute value",
-    kind: CodeActionKind.QuickFix,
-    edit: {
-      changes: {
-        [document.uri]: [edit],
+  return makeFix(document, "Remove unsafe characters from attribute value", [
+    {
+      range: {
+        start: document.positionAt(offset),
+        end: document.positionAt(offset + raw.length),
       },
+      newText,
     },
-    isPreferred: true,
-  };
+  ]);
 }
 
 /**
@@ -2624,10 +2120,6 @@ function createFrameTitleRequireFix(
   document: TextDocument,
   diagnostic: Diagnostic,
 ): CodeAction | null {
-  if (!diagnostic.data || diagnostic.data.ruleId !== "frame-title-require") {
-    return null;
-  }
-
   const offset = findDiagnosticRawOffset(document, diagnostic);
   if (offset === -1) {
     trace(`[DEBUG] createFrameTitleRequireFix: Tag not found`);
@@ -2651,25 +2143,44 @@ function createFrameTitleRequireFix(
 
   // Insert directly after the tag name
   const insertPosition = document.positionAt(offset + tagMatch[0].length);
-  const edit: TextEdit = {
-    range: {
-      start: insertPosition,
-      end: insertPosition,
+  return makeFix(document, "Add aria-label attribute", [
+    {
+      range: { start: insertPosition, end: insertPosition },
+      newText: ' aria-label=""',
     },
-    newText: ' aria-label=""',
-  };
-
-  return {
-    title: "Add aria-label attribute",
-    kind: CodeActionKind.QuickFix,
-    edit: {
-      changes: {
-        [document.uri]: [edit],
-      },
-    },
-    isPreferred: true,
-  };
+  ]);
 }
+
+/**
+ * Auto-fix functions keyed by HTMLHint rule ID
+ */
+const autoFixes: Record<string, AutoFix> = {
+  "alt-require": createAltRequireFix,
+  "attr-lowercase": createAttrLowercaseFix,
+  "attr-no-duplication": createAttrNoDuplicationFix,
+  "attr-no-unnecessary-whitespace": createAttrNoUnnecessaryWhitespaceFix,
+  "attr-unsafe-chars": createAttrUnsafeCharsFix,
+  "attr-value-double-quotes": createAttrValueDoubleQuotesFix,
+  "attr-value-no-duplication": createAttrValueNoDuplicationFix,
+  "attr-value-single-quotes": createAttrValueSingleQuotesFix,
+  "attr-whitespace": createAttrWhitespaceFix,
+  "button-type-require": createButtonTypeRequireFix,
+  "doctype-first": createDoctypeFirstFix,
+  "doctype-html5": createDoctypeHtml5Fix,
+  "empty-tag-not-self-closed": createEmptyTagNotSelfClosedFix,
+  "form-method-require": createFormMethodRequireFix,
+  "frame-title-require": createFrameTitleRequireFix,
+  "html-lang-require": createHtmlLangRequireFix,
+  "link-rel-canonical-require": createLinkRelCanonicalRequireFix,
+  "meta-charset-require": createMetaCharsetRequireFix,
+  "meta-description-require": createMetaDescriptionRequireFix,
+  "meta-viewport-require": createMetaViewportRequireFix,
+  "spec-char-escape": createSpecCharEscapeFix,
+  "tag-no-obsolete": createTagNoObsoleteFix,
+  "tag-self-close": createTagSelfCloseFix,
+  "tagname-lowercase": createTagnameLowercaseFix,
+  "title-require": createTitleRequireFix,
+};
 
 /**
  * Create auto-fix actions for supported rules
@@ -2685,7 +2196,7 @@ async function createAutoFixes(
 
   for (const diagnostic of diagnostics) {
     trace(`[DEBUG] Processing diagnostic: ${JSON.stringify(diagnostic)}`);
-    const ruleId = diagnostic.data?.ruleId || diagnostic.code;
+    const ruleId = diagnostic.data?.ruleId;
     trace(`[DEBUG] Using ruleId: ${ruleId}`);
 
     if (!ruleId) {
@@ -2694,113 +2205,15 @@ async function createAutoFixes(
     }
 
     try {
-      let fix: CodeAction | null = null;
-
-      switch (ruleId) {
-        case "html-lang-require":
-          trace(`[DEBUG] Calling createHtmlLangRequireFix`);
-          fix = await createHtmlLangRequireFix(document, diagnostic);
-          break;
-        case "title-require":
-          trace(`[DEBUG] Calling createTitleRequireFix`);
-          fix = await createTitleRequireFix(document, diagnostic);
-          break;
-        case "attr-value-double-quotes":
-          trace(`[DEBUG] Calling createAttrValueDoubleQuotesFix`);
-          fix = await createAttrValueDoubleQuotesFix(document, diagnostic);
-          break;
-        case "attr-value-single-quotes":
-          trace(`[DEBUG] Calling createAttrValueSingleQuotesFix`);
-          fix = createAttrValueSingleQuotesFix(document, diagnostic);
-          break;
-        case "attr-unsafe-chars":
-          trace(`[DEBUG] Calling createAttrUnsafeCharsFix`);
-          fix = createAttrUnsafeCharsFix(document, diagnostic);
-          break;
-        case "frame-title-require":
-          trace(`[DEBUG] Calling createFrameTitleRequireFix`);
-          fix = createFrameTitleRequireFix(document, diagnostic);
-          break;
-        case "tagname-lowercase":
-          trace(`[DEBUG] Calling createTagnameLowercaseFix`);
-          fix = await createTagnameLowercaseFix(document, diagnostic);
-          break;
-        case "attr-lowercase":
-          trace(`[DEBUG] Calling createAttrLowercaseFix`);
-          fix = await createAttrLowercaseFix(document, diagnostic);
-          break;
-        case "doctype-first":
-          trace(`[DEBUG] Calling createDoctypeFirstFix`);
-          fix = await createDoctypeFirstFix(document, diagnostic);
-          break;
-        case "doctype-html5":
-          trace(`[DEBUG] Calling createDoctypeHtml5Fix`);
-          fix = await createDoctypeHtml5Fix(document, diagnostic);
-          break;
-        case "meta-charset-require":
-          trace(`[DEBUG] Calling createMetaCharsetRequireFix`);
-          fix = await createMetaCharsetRequireFix(document, diagnostic);
-          break;
-        case "meta-viewport-require":
-          trace(`[DEBUG] Calling createMetaViewportRequireFix`);
-          fix = await createMetaViewportRequireFix(document, diagnostic);
-          break;
-        case "meta-description-require":
-          trace(`[DEBUG] Calling createMetaDescriptionRequireFix`);
-          fix = await createMetaDescriptionRequireFix(document, diagnostic);
-          break;
-        case "link-rel-canonical-require":
-          trace(`[DEBUG] Calling createLinkRelCanonicalRequireFix`);
-          fix = await createLinkRelCanonicalRequireFix(document, diagnostic);
-          break;
-        case "alt-require":
-          trace(`[DEBUG] Calling createAltRequireFix`);
-          fix = createAltRequireFix(document, diagnostic);
-          break;
-        case "button-type-require":
-          trace(`[DEBUG] Calling createButtonTypeRequireFix`);
-          fix = createButtonTypeRequireFix(document, diagnostic);
-          break;
-        case "attr-no-unnecessary-whitespace":
-          trace(`[DEBUG] Calling createAttrNoUnnecessaryWhitespaceFix`);
-          fix = createAttrNoUnnecessaryWhitespaceFix(document, diagnostic);
-          break;
-        case "attr-whitespace":
-          trace(`[DEBUG] Calling createAttrWhitespaceFix`);
-          fix = createAttrWhitespaceFix(document, diagnostic);
-          break;
-        case "spec-char-escape":
-          trace(`[DEBUG] Calling createSpecCharEscapeFix`);
-          fix = createSpecCharEscapeFix(document, diagnostic);
-          break;
-        case "tag-self-close":
-          trace(`[DEBUG] Calling createTagSelfCloseFix`);
-          fix = createTagSelfCloseFix(document, diagnostic);
-          break;
-        case "tag-no-obsolete":
-          trace(`[DEBUG] Calling createTagNoObsoleteFix`);
-          fix = createTagNoObsoleteFix(document, diagnostic);
-          break;
-        case "attr-no-duplication":
-          trace(`[DEBUG] Calling createAttrNoDuplicationFix`);
-          fix = createAttrNoDuplicationFix(document, diagnostic);
-          break;
-        case "attr-value-no-duplication":
-          trace(`[DEBUG] Calling createAttrValueNoDuplicationFix`);
-          fix = createAttrValueNoDuplicationFix(document, diagnostic);
-          break;
-        case "form-method-require":
-          trace(`[DEBUG] Calling createFormMethodRequireFix`);
-          fix = createFormMethodRequireFix(document, diagnostic);
-          break;
-        case "empty-tag-not-self-closed":
-          trace(`[DEBUG] Calling createEmptyTagNotSelfClosedFix`);
-          fix = createEmptyTagNotSelfClosedFix(document, diagnostic);
-          break;
-        default:
-          trace(`[DEBUG] No autofix function found for rule: ${ruleId}`);
-          break;
+      const autoFix = Object.hasOwn(autoFixes, ruleId)
+        ? autoFixes[ruleId]
+        : undefined;
+      if (!autoFix) {
+        trace(`[DEBUG] No autofix function found for rule: ${ruleId}`);
+        continue;
       }
+
+      const fix = autoFix(document, diagnostic);
 
       if (fix) {
         trace(`[DEBUG] Adding fix for rule ${ruleId}`);
