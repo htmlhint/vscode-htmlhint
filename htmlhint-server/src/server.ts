@@ -192,7 +192,6 @@ function getConfiguration(filePath: string): HtmlHintConfig {
  * to find a .htmlhintrc file to use as the linter configuration.  The settings are
  */
 function findConfigForHtmlFile(base: string): HtmlHintConfig | undefined {
-  let options: HtmlHintConfig | undefined;
   trace(`[HTMLHint Debug] Looking for config starting from: ${base}`);
 
   if (fs.existsSync(base)) {
@@ -220,9 +219,8 @@ function findConfigForHtmlFile(base: string): HtmlHintConfig | undefined {
 
         // defined, non-null value means we found a config file at the given path, so use it.
         if (htmlhintrcOptions[tmpConfigFile]) {
-          options = htmlhintrcOptions[tmpConfigFile];
           trace(`[HTMLHint Debug] Using config from: ${tmpConfigFile}`);
-          return options;
+          return htmlhintrcOptions[tmpConfigFile];
         }
       }
 
@@ -238,11 +236,8 @@ function findConfigForHtmlFile(base: string): HtmlHintConfig | undefined {
     trace(`[HTMLHint Debug] Base path does not exist: ${base}`);
   }
 
-  if (!options) {
-    trace(`[HTMLHint Debug] No config file found, using default rules`);
-  }
-
-  return options;
+  trace(`[HTMLHint Debug] No config file found, using default rules`);
+  return undefined;
 }
 
 /**
