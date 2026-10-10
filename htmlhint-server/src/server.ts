@@ -2256,31 +2256,40 @@ function createDisableNextLineAction(
 
   const title = `Disable ${ruleId} for this line`;
   const previousLine = lineIndex > 0 ? lines[lineIndex - 1] : undefined;
+  // HTMLHint only honours the first directive on a line, wherever it appears
   const existing = previousLine?.match(
-    /^(\s*)<!--\s*htmlhint-disable-next-line(?:\s+([^\r\n]+?))?\s*-->\s*$/i,
+    /<!--\s*htmlhint-(disable|enable)(-next-line)?(?:\s+([^\r\n]+?))?\s*-->/i,
   );
 
-  if (previousLine !== undefined && existing) {
+  if (
+    existing?.index !== undefined &&
+    existing[1].toLowerCase() === "disable" &&
+    existing[2]
+  ) {
     // Without a rule list the comment already disables every rule
-    if (!existing[2]) {
+    if (!existing[3]) {
       return null;
     }
 
-    const rules = existing[2].split(/\s+/).filter((rule) => rule.length > 0);
+    const rules = existing[3].split(/\s+/).filter((rule) => rule.length > 0);
     if (rules.includes(ruleId)) {
       return null;
     }
 
+    // Replace only the directive so any surrounding content on the line is kept
     return makeFix(
       document,
       title,
       [
         {
           range: {
-            start: { line: lineIndex - 1, character: 0 },
-            end: { line: lineIndex - 1, character: previousLine.length },
+            start: { line: lineIndex - 1, character: existing.index },
+            end: {
+              line: lineIndex - 1,
+              character: existing.index + existing[0].length,
+            },
           },
-          newText: `${existing[1]}<!-- htmlhint-disable-next-line ${[...rules, ruleId].join(" ")} -->`,
+          newText: `<!-- htmlhint-disable-next-line ${[...rules, ruleId].join(" ")} -->`,
         },
       ],
       diagnostic,
