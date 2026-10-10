@@ -2232,6 +2232,80 @@ async function createAutoFixes(
   return actions;
 }
 
+/**
+ * Suppress a rule for the diagnostic's line by adding an
+ * <!-- htmlhint-disable-next-line rule-id --> comment above it. If the line above
+ * already has such a comment, the rule is appended to it.
+ */
+function createDisableNextLineAction(
+  document: TextDocument,
+  diagnostic: Diagnostic,
+): CodeAction | null {
+  const ruleId = diagnostic.data?.ruleId;
+  if (typeof ruleId !== "string" || !ruleId) {
+    return null;
+  }
+
+  const lineIndex = diagnostic.range.start.line;
+  const text = document.getText();
+  const lines = text.split(/\r?\n/);
+  const lineText = lines[lineIndex];
+  if (lineText === undefined) {
+    return null;
+  }
+
+  const title = `Disable ${ruleId} for this line`;
+  const previousLine = lineIndex > 0 ? lines[lineIndex - 1] : undefined;
+  const existing = previousLine?.match(
+    /^(\s*)<!--\s*htmlhint-disable-next-line(?:\s+([^\r\n]+?))?\s*-->\s*$/i,
+  );
+
+  if (previousLine !== undefined && existing) {
+    // Without a rule list the comment already disables every rule
+    if (!existing[2]) {
+      return null;
+    }
+
+    const rules = existing[2].split(/\s+/).filter((rule) => rule.length > 0);
+    if (rules.includes(ruleId)) {
+      return null;
+    }
+
+    return makeFix(
+      document,
+      title,
+      [
+        {
+          range: {
+            start: { line: lineIndex - 1, character: 0 },
+            end: { line: lineIndex - 1, character: previousLine.length },
+          },
+          newText: `${existing[1]}<!-- htmlhint-disable-next-line ${[...rules, ruleId].join(" ")} -->`,
+        },
+      ],
+      diagnostic,
+    );
+  }
+
+  const indent = lineText.match(/^\s*/)?.[0] ?? "";
+  const eol = text.includes("\r\n") ? "\r\n" : "\n";
+
+  return makeFix(
+    document,
+    title,
+    [
+      {
+        range: {
+          start: { line: lineIndex, character: 0 },
+          end: { line: lineIndex, character: 0 },
+        },
+        newText: `${indent}<!-- htmlhint-disable-next-line ${ruleId} -->${eol}`,
+      },
+    ],
+    diagnostic,
+  );
+}
+
 connection.onInitialize(
   (_params: InitializeParams, _token: CancellationToken) => {
     // Since Files API is no longer available, we'll use embedded htmlhint directly
@@ -2549,7 +2623,9 @@ connection.onRequest(
       }
 
       // Create auto-fixes for each diagnostic
-      const codeActions: LSPCodeAction[] = [];
+      const fixActions: CodeAction[] = [];
+      const disableActions: CodeAction[] = [];
+      const disabledRuleLines = new Set<string>();
       for (const diagnostic of filteredDiagnostics) {
         trace(
           `[DEBUG] Creating fixes for diagnostic: ${JSON.stringify(diagnostic)}`,
@@ -2581,40 +2657,58 @@ connection.onRequest(
         trace(
           `[DEBUG] Created ${fixes.length} fixes for diagnostic: ${JSON.stringify(enhancedDiagnostic)}`,
         );
-        codeActions.push(
-          ...fixes.map((fix) => ({
-            title: fix.title,
-            kind: fix.kind,
-            diagnostics: fix.diagnostics,
-            isPreferred: fix.isPreferred,
-            edit: fix.edit
-              ? {
-                  changes: fix.edit.documentChanges
-                    ? {
-                        [uri]: (fix.edit.documentChanges[0] as any).edits || [],
-                      }
-                    : fix.edit.changes && fix.edit.changes[uri]
-                      ? {
-                          [uri]: fix.edit.changes[uri].map((change) => ({
-                            range: {
-                              start: {
-                                line: change.range.start.line,
-                                character: change.range.start.character,
-                              },
-                              end: {
-                                line: change.range.end.line,
-                                character: change.range.end.character,
-                              },
-                            },
-                            newText: change.newText,
-                          })),
-                        }
-                      : { [uri]: [] },
-                }
-              : undefined,
-          })),
-        );
+
+        // Offer one disable action per rule and line, listed after all autofixes
+        const disableKey = `${enhancedDiagnostic.range.start.line}:${enhancedDiagnostic.data?.ruleId}`;
+        if (!disabledRuleLines.has(disableKey)) {
+          disabledRuleLines.add(disableKey);
+          const disableAction = createDisableNextLineAction(
+            document,
+            enhancedDiagnostic,
+          );
+          if (disableAction) {
+            disableAction.isPreferred = false;
+            disableActions.push(disableAction);
+          }
+        }
+
+        fixActions.push(...fixes);
       }
+
+      const codeActions: LSPCodeAction[] = [
+        ...fixActions,
+        ...disableActions,
+      ].map((fix) => ({
+        title: fix.title,
+        kind: fix.kind,
+        diagnostics: fix.diagnostics,
+        isPreferred: fix.isPreferred,
+        edit: fix.edit
+          ? {
+              changes: fix.edit.documentChanges
+                ? {
+                    [uri]: (fix.edit.documentChanges[0] as any).edits || [],
+                  }
+                : fix.edit.changes && fix.edit.changes[uri]
+                  ? {
+                      [uri]: fix.edit.changes[uri].map((change) => ({
+                        range: {
+                          start: {
+                            line: change.range.start.line,
+                            character: change.range.start.character,
+                          },
+                          end: {
+                            line: change.range.end.line,
+                            character: change.range.end.character,
+                          },
+                        },
+                        newText: change.newText,
+                      })),
+                    }
+                  : { [uri]: [] },
+            }
+          : undefined,
+      }));
 
       trace(`[DEBUG] Created ${codeActions.length} auto-fix actions`);
       trace(`[DEBUG] Code actions: ${JSON.stringify(codeActions)}`);

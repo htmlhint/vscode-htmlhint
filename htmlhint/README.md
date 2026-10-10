@@ -20,6 +20,8 @@ Errors in HTML files are highlighted with squiggles and you can hover over the s
 
 Many problems can now be fixed automatically by clicking on the lightbulb icon in problems panel or right-clicking on the error in the HTML file and selecting "Quick Fix".
 
+Every problem also offers a "Disable rule-id for this line" Quick Fix, which adds an `<!-- htmlhint-disable-next-line rule-id -->` comment above the line (or appends the rule to an existing one).
+
 ![hover](https://github.com/htmlhint/vscode-htmlhint/raw/main/htmlhint/images/hover.png)
 
 ### Auto-fix Support

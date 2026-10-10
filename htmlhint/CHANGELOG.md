@@ -2,9 +2,10 @@
 
 All notable changes to the "vscode-htmlhint" extension will be documented in this file.
 
-### v1.18.0 (2026-09-26)
+### v1.18.0 (Unreleased)
 
 - Add autofix for the `attr-unsafe-chars`, `attr-value-single-quotes` and `frame-title-require` rules
+- Add "Disable rule for this line" Quick Fix for every rule, which inserts an `<!-- htmlhint-disable-next-line rule-id -->` comment
 
 ### v1.17.0 (2026-09-23)
 
