@@ -63,6 +63,17 @@
 
         <!-- Test case 5: Mixed case acronym -->
         <ACRONYM title="Extensible Markup Language">XML</ACRONYM>
+        <!-- attr-unsafe-chars: invisible characters in attribute values (U+200E, U+00AD) -->
+        <a href="https://example.com/‎page">Unsafe link</a>
+        <div title="Soft­hyphen">Soft hyphen in title</div>
+
+        <!-- attr-value-single-quotes: double-quoted and unquoted values (enable rule in .htmlhintrc) -->
+        <span class="single-quotes" data-value=unquoted>Quotes</span>
+
+        <!-- frame-title-require: iframe and frame missing aria-label -->
+        <iframe src="https://example.com"></iframe>
+        <iframe src="https://example.com" aria-label="">Empty aria-label should not get a duplicate</iframe>
+        <frame src="frame.html">
     <br />
   </body>
 </html>
