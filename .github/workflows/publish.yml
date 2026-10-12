@@ -17,7 +17,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
 
@@ -28,12 +28,12 @@ jobs:
       - run: npm run package
 
       - name: Publish to Open VSX Registry
-        uses: HaaLeo/publish-vscode-extension@ca5561daa085dee804bf9f37fe0165785a9b14db # v2.0.0
+        uses: HaaLeo/publish-vscode-extension@1b8df468b849f76a143b8c18bf0ffa2075398d12 # v2.1.0
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
 
       - name: Publish to Visual Studio Marketplace
-        uses: HaaLeo/publish-vscode-extension@ca5561daa085dee804bf9f37fe0165785a9b14db # v2.0.0
+        uses: HaaLeo/publish-vscode-extension@1b8df468b849f76a143b8c18bf0ffa2075398d12 # v2.1.0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
