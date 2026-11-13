@@ -13,7 +13,7 @@ permissions:
 jobs:
   run:
     name: Node 22 on ubuntu-latest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Clone repository
